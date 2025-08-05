@@ -6,7 +6,7 @@ from typing import Dict, Any, Optional
 
 from gnosis_ahp.tools.base import tool
 
-DOCKER_API_URL = "http://localhost:5680"
+DOCKER_API_URL = "http://host.docker.internal:5680"
 
 @tool(description="Interact with the Gnosis Docker API to manage containers and images.")
 async def docker_api(

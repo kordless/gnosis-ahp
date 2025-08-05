@@ -84,6 +84,7 @@ async def check_inbox(
         raise ValueError("agent_id must be provided")
     
     inbox_dir = MESSAGE_STORE / agent_id / "inbox"
+    logger.info(f"Checking inbox for agent '{agent_id}' at: {inbox_dir}")
     if not inbox_dir.exists():
         return []
     

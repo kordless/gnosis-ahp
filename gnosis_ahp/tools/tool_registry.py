@@ -5,9 +5,11 @@ import importlib
 import importlib.util
 import inspect
 import logging
+import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Callable, Union, Set
 from collections import defaultdict
+
 
 from gnosis_ahp.tools.base import BaseTool, FunctionTool, tool
 #from gnosis_ahp.utils.errors import ToolError, ValidationError
@@ -26,6 +28,13 @@ logger = logging.getLogger(__name__)
 class ToolRegistry:
     """Registry for discovering and managing tools."""
     
+    RESERVED_NAMES = {
+        "auth", "openapi", "schema", "session", "human_home", 
+        "robots.txt", "health", "static", "docs", "redoc"
+    }
+    # Regex to catch variations like /session/start
+    RESERVED_PATTERN = re.compile(r"^(auth|openapi|schema|session|docs|redoc|health)(\/.*)?$")
+
     def __init__(self):
         """Initialize the tool registry."""
         self.tools: Dict[str, Dict[str, Any]] = {}
@@ -33,6 +42,10 @@ class ToolRegistry:
         self.usage_limits: Dict[str, int] = {}
         self.usage_counts: Dict[str, int] = defaultdict(int)
         
+    def is_reserved(self, name: str) -> bool:
+        """Check if a tool name conflicts with a reserved path."""
+        return name in self.RESERVED_NAMES or self.RESERVED_PATTERN.match(name) is not None
+
     def register(
         self, 
         tool_obj: Union[BaseTool, Callable, type],
@@ -65,6 +78,12 @@ class ToolRegistry:
         if not isinstance(tool_instance, BaseTool):
             raise ToolError(f"Invalid tool type: {type(tool_instance)}")
         
+        # Check for reserved names
+        if self.is_reserved(tool_instance.name):
+            raise ToolError(
+                f"Tool name '{tool_instance.name}' is reserved for system use."
+            )
+
         # Check for duplicates
         if tool_instance.name in self.tools and not override:
             raise ToolError(f"Tool '{tool_instance.name}' already registered")
@@ -113,6 +132,9 @@ class ToolRegistry:
         Returns:
             List of discovered tool schemas
         """
+        ahp_environment = os.getenv("AHP_ENVIRONMENT", "local")
+        logger.info(f"Tool discovery running in '{ahp_environment}' mode.")
+
         path = Path(path)
         discovered = []
         
@@ -134,6 +156,11 @@ class ToolRegistry:
             for py_file in path.glob(pattern):
                 # Skip registry, base, init, and test files from discovery
                 if py_file.name in ("__init__.py", "base.py", "tool_registry.py") or py_file.name.startswith("test_"):
+                    continue
+
+                # Skip docker_api in cloud environment
+                if ahp_environment == "cloud" and py_file.name == "docker_api.py":
+                    logger.info("Skipping docker_api.py in cloud environment.")
                     continue
                     
                 tools_to_reg = self._extract_tools_from_file(py_file, strict)

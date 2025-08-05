@@ -65,17 +65,17 @@
             <div class="card-body">
                 <ol>
                     <li>An AI agent is given the base URL of this server.</li>
-                    <li>The agent asks the server for a list of available tools by calling <code>/?f=tools</code>.</li>
+                    <li>The agent asks the server for a list of available tools by visiting the <code>/openapi</code> or <code>/schema</code> endpoint.</li>
                     <li>The server sends back a list of tools and the parameters they accept (e.g., a <code>send_message</code> tool that needs a <code>recipient</code> and a <code>message</code>).</li>
-                    <li>The AI constructs a specific URL to execute an action, like <code>/?f=tool&name=send_message&recipient=kord&message=hello</code>.</li>
+                    <li>The AI constructs a specific URL to execute an action, like <code>/send_message?recipient=kord&message=hello</code>.</li>
                     <li>This server receives the URL, runs the underlying code for the <code>send_message</code> tool, and sends the result back to the AI.</li>
                 </ol>
             </div>
         </div>
         
         <div class="text-center mt-4">
-            <a href="/?f=tools_ui" class="btn btn-primary">View Available Tools</a>
-            <a href="/?f=home" class="btn btn-secondary">View AI Instruction Page</a>
+            <a href="/tools_ui" class="btn btn-primary">View Available Tools</a>
+            <a href="/" class="btn btn-secondary">View AI Instruction Page</a>
         </div>
     </div>
 </body>

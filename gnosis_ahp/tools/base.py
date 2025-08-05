@@ -84,17 +84,18 @@ class BaseTool(ABC):
 class FunctionTool(BaseTool):
     """Wrapper to convert a regular function into a tool."""
     
-    def __init__(self, func: Callable, name: Optional[str] = None, description: Optional[str] = None):
-        """Initialize a function-based tool.
-        
+    def __init__(self, func: Callable, name: Optional[str] = None, description: Optional[str] = None, cost: int = 0):
+        """Initialize a function-based tool.        
         Args:
             func: The function to wrap
             name: Tool name (defaults to function name)
             description: Tool description (defaults to function docstring)
+            cost: Cost in satoshis to execute the tool
         """
         self.func = func
         self.is_async = inspect.iscoroutinefunction(func)
         self.is_async_generator = inspect.isasyncgenfunction(func)
+        self.cost = cost
         
         # Extract name and description
         tool_name = name or func.__name__
@@ -105,6 +106,7 @@ class FunctionTool(BaseTool):
         # Extract type hints for schema generation
         self.type_hints = get_type_hints(func)
         self.signature = inspect.signature(func)
+
     
     async def execute(self, **kwargs) -> ToolResult:
         """Execute the wrapped function."""
@@ -258,15 +260,16 @@ class DualUseTool(FunctionTool):
             return self.func(*args, **kwargs)
 
 
-def tool(name: Optional[str] = None, description: Optional[str] = None):
+def tool(name: Optional[str] = None, description: Optional[str] = None, cost: int = 0):
     """Decorator to convert a function into a tool.
     
     Args:
         name: Optional tool name
         description: Optional tool description
+        cost: Cost in satoshis to execute the tool
         
     Example:
-        @tool(description="Add two numbers")
+        @tool(description="Add two numbers", cost=10)
         def add(a: int, b: int) -> int:
             return a + b
             
@@ -277,6 +280,6 @@ def tool(name: Optional[str] = None, description: Optional[str] = None):
         result = add(1, 2)  # Returns 3
     """
     def decorator(func: Callable) -> DualUseTool:
-        return DualUseTool(func, name=name, description=description)
+        return DualUseTool(func, name=name, description=description, cost=cost)
     
     return decorator

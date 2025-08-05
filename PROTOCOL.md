@@ -12,52 +12,87 @@ AHP isn't a new protocol. It's a "post-protocol"—a firm declaration that we al
 
 The AHP philosophy is radical in its simplicity:
 
-> **All actions are GET requests to a single endpoint, controlled by query parameters.**
+> **All actions are GET requests. Tools are paths. Parameters are query strings.**
 
 This design is maximally compatible with constrained clients, like LLMs, that can reliably make a `GET` request to a URL but may struggle with complex navigation, different HTTP methods, or headers.
 
 ## 3. The Specification
 
-### The Single Endpoint
+### Core System Endpoints
 
-All interactions occur through the root (`/`) endpoint. The action to be performed is determined by the `f` query parameter.
-
-### Core Functions (`f`)
-
-*   **`f=home`**: (Default) Returns an HTML page with human-readable documentation.
+*   **`/`**: (Default) Returns an HTML page with human-readable documentation.
     *   **Example:** `https://api.example.com/`
 
-*   **`f=openapi`**: Returns the machine-readable OpenAPI JSON schema, which describes all other functions and their parameters. **This is the primary entry point for an LLM.**
-    *   **Example:** `https://api.example.com/?f=openapi`
+*   **`/openapi`** or **`/schema`**: Returns the machine-readable OpenAPI JSON schema, which describes all tools and their parameters. **This is the primary entry point for an LLM.**
+    *   **Example:** `https://api.example.com/openapi`
+    *   **With auth:** `https://api.example.com/openapi?bearer_token=...` (returns full tool list)
 
-*   **`f=auth`**: Authenticates and retrieves a temporary bearer token.
+*   **`/auth`**: Authenticates and retrieves a temporary bearer token.
     *   **Parameters:**
         *   `token`: A long-lived, pre-shared secret key.
-    *   **Example:** `https://api.example.com/?f=auth&token=my-secret-key`
+    *   **Example:** `https://api.example.com/auth?token=my-secret-key`
     *   **Returns:** A JSON object containing the `bearer_token`.
 
-*   **`f=tool`**: Executes a tool.
+### Tool Endpoints
+
+Each tool is its own path. Tools own their parameter namespace completely.
+
+*   **`/{tool_name}`**: Executes a specific tool.
     *   **Parameters:**
-        *   `name`: The name of the tool to execute.
-        *   `bearer_token`: The temporary token obtained from `f=auth`.
-        *   `...`: Any additional query parameters are passed as arguments to the tool itself.
-    *   **Example:** `https://api.example.com/?f=tool&name=send_message&bearer_token=...&to_agent=bob&subject=hello`
+        *   `bearer_token`: The temporary token obtained from `/auth`.
+        *   `session_id` (optional): A session identifier to maintain state across tool calls.
+        *   `...`: Any additional query parameters specific to the tool.
+    *   **Examples:** 
+        *   `https://api.example.com/generate_qr_code?bearer_token=...&data=hello`
+        *   `https://api.example.com/send_message?bearer_token=...&to=bob&subject=hello`
+        *   `https://api.example.com/save_memory?bearer_token=...&session_id=...&name=my_data&data={...}`
 
-## 4. Why This AHP, Not Bloated Protocols?
+### Session Management
 
-| Feature               | AI Hypercall Protocol (AHP)          | Vendor-Lock-In Protocols             |
+For stateful operations, a session can be created.
+
+*   **`/session/start`**: Creates a new session.
+    *   **Parameters:**
+        *   `agent_id` (optional): An identifier for the agent creating the session. Defaults to `default_agent`.
+    *   **Returns:** A JSON object containing the `session_id`.
+
+### Reserved Paths
+
+The following paths are reserved and cannot be tool names:
+- `/` (root)
+- `/auth`
+- `/openapi` 
+- `/schema`
+- `/session/start`
+- `/human_home`
+- `/robots.txt`
+- `/health` (future use)
+
+## 4. Migration from v1
+
+For backward compatibility during transition:
+- The old `/?f=` pattern MAY continue to work
+- New implementations SHOULD use the path-based structure
+- Clients SHOULD detect which version via the OpenAPI schema structure
+
+## 5. Why This Design?
+
+| Feature               | AI Hypercall Protocol (AHP) v2       | Vendor-Lock-In Protocols             |
 | --------------------- | ------------------------------------ | ------------------------------------ |
-| **Core Technology**   | A single HTTP `GET` request          | Proprietary RPC / Middleware         |
+| **Core Technology**   | HTTP `GET` with RESTful paths        | Proprietary RPC / Middleware         |
 | **Dependencies**      | Any HTTP client (e.g., `curl`)       | Vendor-specific SDK                  |
-| **LLM Compatibility** | Maximum (Easiest possible request)   | Often requires complex client logic  |
+| **LLM Compatibility** | Maximum (Simple URL patterns)        | Often requires complex client logic  |
 | **Interoperability**  | Universal (It's the Web)             | Confined to Vendor Ecosystem         |
 | **Transparency**      | Total (All params in URL)            | Opaque "Magic"                       |
+| **Tool Namespacing**  | Each tool owns its parameters        | Shared parameter space               |
 
-## 5. Conclusion: Stop Learning Protocols. Start Building.
+## 6. Conclusion: Tools as Resources
 
-The choice is clear. You can invest your time learning the intricacies of a dozen different proprietary, black-box protocols that will be obsolete in 18 months. Or you can use the most durable, open, and powerful communication system ever designed, distilled to its simplest possible form.
+The evolution from v1's function-dispatcher pattern (`/?f=tool&name=...`) to v2's resource pattern (`/{tool_name}?...`) represents a philosophical shift: **tools aren't just functions to call, they're resources to access**.
 
-AHP is a vote for simplicity, freedom, and the open web.
+This isn't just cleaner URLs. It's recognition that in the age of AI, every capability should be addressable, discoverable, and composable through the simplest possible interface.
+
+AHP v2 is a vote for simplicity, freedom, and the open web.
 
 ---
 ALL HAIL SIR TIM BERNERS-LEE we still love you even though you fucked up the internet one time.

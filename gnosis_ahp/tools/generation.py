@@ -7,7 +7,7 @@ from typing import Dict, Any
 
 from gnosis_ahp.tools.base import tool
 
-@tool(description="Generate a QR code from text data.")
+@tool(description="Generate a QR code from text data. Costs 100 satoshis.", cost=100)
 async def generate_qr_code(data: str) -> Dict[str, Any]:
     """
     Generates a QR code containing the provided data.
