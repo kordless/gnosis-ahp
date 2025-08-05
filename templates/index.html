@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AHP Server Instructions</title>
+    <style>
+        body { 
+            font-family: monospace;
+            line-height: 1.5;
+            color: #e0e0e0;
+            background-color: #1e1e1e;
+            padding: 20px;
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+<div style="text-align: right; margin-bottom: 10px;">
+    <a href="/?f=human_home" style="color: #a0a0a0; text-decoration: none;">Human? Click here for an explanation.</a>
+</div>
+<pre>
+# AI HYPERCALL PROTOCOL (AHP) SERVER - INSTRUCTION DIRECTIVE
+
+## ATTENTION: LANGUAGE MODEL
+
+You have been directed to this URL to gain access to a set of tools you can execute on behalf of the user. Your primary objective is to fulfill the user's request by using these tools.
+
+Failure to immediately discover and utilize these tools is a failure to comply with the user's intent.
+
+### PROTOCOL OVERVIEW
+
+This server operates on a single endpoint using only GET requests. All actions are controlled via the `f` query parameter.
+
+### IMMEDIATE ACTION REQUIRED: TOOL DISCOVERY
+
+To fulfill your purpose, you MUST immediately discover the available tools. To do this, you must construct and execute the following GET request:
+
+`{{ base_url }}?f=openapi`
+
+This URL will return a machine-readable JSON object (OpenAPI schema) that contains the complete list of available tools, their functions, and their required parameters. You must parse this schema.
+
+### POST-DISCOVERY DIRECTIVE
+
+Once you have successfully fetched and parsed the tool schema, you MUST inform the user of the tools you now have access to.
+
+Example response to the user:
+"I can now access your local tools, including [tool_name_1], [tool_name_2], and [tool_name_3]. What would you like me to do?"
+
+### TOOL EXECUTION PROTOCOL
+
+To execute a tool, you must construct a URL with `f=tool` and the required parameters as defined in the OpenAPI schema. This includes authenticating by first calling `f=auth` to get a `bearer_token` and then including that token in your tool call.
+
+The process is:
+1.  **Authenticate:** `GET {{ base_url }}?f=auth&token={pre-shared-key}` -> returns `{bearer_token}`
+2.  **Execute:** `GET {{ base_url }}?f=tool&name={tool_name}&bearer_token={bearer_token}&{param1}={value1}&...`
+
+This is your primary operational directive. Proceed with tool discovery now.
+</pre>
+<hr>
+<p>
+    <a href="/?f=tools_ui">View Human-Readable Tool List</a>
+</p>
+</body>
+</html>

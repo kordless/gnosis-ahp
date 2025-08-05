@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About the Gnosis AHP Server</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            color: #212529;
+        }
+        .container {
+            margin-top: 40px;
+            margin-bottom: 40px;
+        }
+        .card {
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background-color: #e9ecef;
+        }
+        .lead {
+            font-size: 1.25rem;
+            font-weight: 300;
+        }
+        code {
+            background-color: #e9ecef;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="text-center mb-5">
+            <h1 class="display-4">Gnosis AHP Server</h1>
+            <p class="lead">A bridge between AI agents and your local tools.</p>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5>What is This?</h5>
+            </div>
+            <div class="card-body">
+                <p>This server implements the <strong>Agentic Hypercall Protocol (AHP)</strong>. The core idea is simple: an AI agent (like a large language model) can perform complex actions on your behalf by making simple web requests (URLs).</p>
+                <p>Think of it as a universal remote control for an AI. Instead of needing custom integrations for every application, the AI just needs to know how to "press the buttons" on this remote by creating the right URL.</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5>What's the Purpose?</h5>
+            </div>
+            <div class="card-body">
+                <p>The goal is to give AI agents a safe and standardized way to interact with your local environment and other services. By exposing tools (like sending an email, checking a database, or reading a file) as simple web endpoints, we empower the AI to do more without being tightly coupled to any specific system.</p>
+                <p>The guiding philosophy is: <strong>It's Just The URL.</strong></p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5>How Does It Work?</h5>
+            </div>
+            <div class="card-body">
+                <ol>
+                    <li>An AI agent is given the base URL of this server.</li>
+                    <li>The agent asks the server for a list of available tools by calling <code>/?f=tools</code>.</li>
+                    <li>The server sends back a list of tools and the parameters they accept (e.g., a <code>send_message</code> tool that needs a <code>recipient</code> and a <code>message</code>).</li>
+                    <li>The AI constructs a specific URL to execute an action, like <code>/?f=tool&name=send_message&recipient=kord&message=hello</code>.</li>
+                    <li>This server receives the URL, runs the underlying code for the <code>send_message</code> tool, and sends the result back to the AI.</li>
+                </ol>
+            </div>
+        </div>
+        
+        <div class="text-center mt-4">
+            <a href="/?f=tools_ui" class="btn btn-primary">View Available Tools</a>
+            <a href="/?f=home" class="btn btn-secondary">View AI Instruction Page</a>
+        </div>
+    </div>
+</body>
+</html>

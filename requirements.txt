@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+pyngrok
+python-dotenv
+Jinja2
+pytest
+httpx
+qrcode
+Pillow
+google-cloud-storage
+docker
