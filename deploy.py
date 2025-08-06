@@ -76,37 +76,44 @@ def main():
         print("✓ Service started successfully. Available at http://localhost:8080")
 
     elif args.target == "cloudrun":
-        print("Deploying to Google Cloud Run...")
+        print("Deploying to Google Cloud Run via Artifact Registry...")
         env_config = dotenv_values(".env.cloudrun")
         
         project_id = env_config.get("PROJECT_ID")
         service_account = env_config.get("GCP_SERVICE_ACCOUNT")
         region = env_config.get("REGION")
+        repo_name = env_config.get("ARTIFACT_REGISTRY_REPO")
 
-        if not all([project_id, service_account, region]):
-            print("Error: .env.cloudrun must contain PROJECT_ID, GCP_SERVICE_ACCOUNT, and REGION.", file=sys.stderr)
+        if not all([project_id, service_account, region, repo_name]):
+            print("Error: .env.cloudrun must contain PROJECT_ID, GCP_SERVICE_ACCOUNT, REGION, and ARTIFACT_REGISTRY_REPO.", file=sys.stderr)
             sys.exit(1)
 
-        gcr_image = f"gcr.io/{project_id}/{image_name}:{args.tag}"
+        # Construct the full image path for Artifact Registry
+        ar_image = f"{region}-docker.pkg.dev/{project_id}/{repo_name}/{image_name}:{args.tag}"
 
-        # Tag and Push Image
-        run_command(["docker", "tag", full_image_name, gcr_image])
-        run_command(["gcloud", "auth", "configure-docker", "--quiet"])
-        run_command(["docker", "push", gcr_image])
-        print("✓ Image pushed successfully.")
+        # Tag and Push Image to Artifact Registry
+        run_command(["docker", "tag", full_image_name, ar_image])
+        run_command(["gcloud", "auth", "configure-docker", f"{region}-docker.pkg.dev", "--quiet"])
+        run_command(["docker", "push", ar_image])
+        print("✓ Image pushed successfully to Artifact Registry.")
 
         # Deploy to Cloud Run
-        env_vars_string = ",".join([f"{key}='{value}'" for key, value in env_config.items()])
+        # Filter out keys that are not for the AHP server itself
+        deploy_env_vars = {k: v for k, v in env_config.items() if k not in ["PROJECT_ID", "GCP_SERVICE_ACCOUNT", "REGION", "ARTIFACT_REGISTRY_REPO"]}
+        env_vars_string = ",".join([f"{key}='{value}'" for key, value in deploy_env_vars.items()])
+        
         deploy_command = [
             "gcloud", "run", "deploy", image_name,
-            "--image", gcr_image,
+            "--image", ar_image,
             "--region", region,
             "--platform", "managed",
             "--allow-unauthenticated",
             "--port", "8080",
-            "--service-account", service_account,
-            "--set-env-vars", env_vars_string
+            "--service-account", service_account
         ]
+        if env_vars_string:
+            deploy_command.extend(["--set-env-vars", env_vars_string])
+
         run_command(deploy_command)
         print("✓ CLOUD RUN DEPLOYMENT SUCCESSFUL!")
 

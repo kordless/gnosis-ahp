@@ -34,17 +34,17 @@ async def docker_api(
     Returns:
         The JSON response from the Gnosis Docker API.
     """
-    async with httpx.AsyncClient(base_url=DOCKER_API_URL) as client:
+    async with httpx.AsyncClient(base_url=DOCKER_API_URL, headers={"Content-Type": "application/json"}) as client:
         try:
             if command == "ps":
                 params = {"all": str(all).lower()}
                 response = await client.get("/api/containers", params=params)
             elif command == "start" and container_id:
-                response = await client.post(f"/api/containers/{container_id}/start")
+                response = await client.post(f"/api/containers/{container_id}/start", json={})
             elif command == "stop" and container_id:
-                response = await client.post(f"/api/containers/{container_id}/stop")
+                response = await client.post(f"/api/containers/{container_id}/stop", json={})
             elif command == "restart" and container_id:
-                response = await client.post(f"/api/containers/{container_id}/restart")
+                response = await client.post(f"/api/containers/{container_id}/restart", json={})
             elif command == "rm" and container_id:
                 params = {"force": str(force).lower()}
                 response = await client.delete(f"/api/containers/{container_id}", params=params)

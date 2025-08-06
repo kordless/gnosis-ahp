@@ -2,34 +2,29 @@
 
 import logging
 from typing import Dict, Any, List, Optional
-from datetime import datetime
-import json
-from pathlib import Path
 
 from gnosis_ahp.tools.base import tool
+from gnosis_ahp.core.storage_service import StorageService
 
 logger = logging.getLogger(__name__)
 
-# Message storage - in a real app, this should be a proper database.
-MESSAGE_STORE = Path.home() / ".gnosis-ahp" / "messages"
-MESSAGE_STORE.mkdir(parents=True, exist_ok=True)
-
-
-@tool(description="Send a message to another agent")
+@tool(description="Send a message to another agent's session-based inbox.")
 async def send_message(
     to_agent: str,
     subject: str,
     body: str,
+    session: Dict[str, Any],
     from_agent: Optional[str] = "system",
     priority: str = "normal"
 ) -> Dict[str, Any]:
     """
-    Send a message to another agent.
+    Send a message to another agent using the session storage service.
     
     Args:
         to_agent: The recipient agent's ID.
         subject: Message subject.
         body: Message body.
+        session: The current session object, provided by the system.
         from_agent: Sender agent ID (can be auto-filled in agent context).
         priority: Message priority (low, normal, high, urgent).
     
@@ -37,6 +32,10 @@ async def send_message(
         Message confirmation with ID.
     """
     logger.info(f"MESSAGE from '{from_agent}' to '{to_agent}': {subject}")
+    
+    # Use the recipient's ID to create a dedicated storage service for their inbox
+    recipient_storage = StorageService(user_email=to_agent)
+    
     message = {
         "id": f"msg_{datetime.now().timestamp()}",
         "from": from_agent,
@@ -48,13 +47,14 @@ async def send_message(
         "read": False
     }
     
-    # Store in recipient's inbox
-    inbox_dir = MESSAGE_STORE / to_agent / "inbox"
-    inbox_dir.mkdir(parents=True, exist_ok=True)
+    # Use a consistent session hash for the inbox to ensure all messages land in the same "place"
+    inbox_session_hash = recipient_storage._compute_user_hash("inbox")
     
-    message_file = inbox_dir / f"{message['id']}.json"
-    with open(message_file, 'w') as f:
-        json.dump(message, f, indent=2)
+    await recipient_storage.save_file(
+        content=json.dumps(message, indent=2),
+        filename=f"{message['id']}.json",
+        session_hash=inbox_session_hash
+    )
     
     return {
         "success": True,
@@ -62,18 +62,19 @@ async def send_message(
         "delivered_to": to_agent,
     }
 
-
-@tool(description="Check your inbox for new messages")
+@tool(description="Check your inbox for new messages.")
 async def check_inbox(
     agent_id: str,
+    session: Dict[str, Any],
     unread_only: bool = True,
     limit: int = 10
 ) -> List[Dict[str, Any]]:
     """
-    Check inbox for messages.
+    Check inbox for messages using the session storage service.
     
     Args:
         agent_id: Agent ID to check inbox for.
+        session: The current session object, provided by the system.
         unread_only: Only show unread messages.
         limit: Maximum number of messages to return.
     
@@ -83,25 +84,28 @@ async def check_inbox(
     if not agent_id:
         raise ValueError("agent_id must be provided")
     
-    inbox_dir = MESSAGE_STORE / agent_id / "inbox"
-    logger.info(f"Checking inbox for agent '{agent_id}' at: {inbox_dir}")
-    if not inbox_dir.exists():
-        return []
-    
+    storage: StorageService = session["storage"]
+    inbox_session_hash = storage._compute_user_hash("inbox")
+
+    try:
+        message_files = await storage.list_files(session_hash=inbox_session_hash)
+    except FileNotFoundError:
+        return [] # Inbox doesn't exist yet
+
     messages = []
-    # Get all message files, sorted by timestamp (newest first)
-    message_files = sorted(inbox_dir.glob("*.json"), key=lambda x: x.stat().st_mtime, reverse=True)
-    
-    for message_file in message_files:
-        with open(message_file, 'r') as f:
-            message = json.load(f)
+    # Sort files by name (which includes the timestamp)
+    message_files.sort(key=lambda x: x['name'], reverse=True)
+
+    for file_info in message_files:
+        content = await storage.get_file(file_info['name'], session_hash=inbox_session_hash)
+        message = json.loads(content)
         
         if unread_only and message.get('read', False):
             continue
-        
+            
         messages.append(message)
         
         if len(messages) >= limit:
             break
-    
+            
     return messages

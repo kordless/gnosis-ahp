@@ -75,42 +75,51 @@ switch ($Target) {
         }
     }
     "cloudrun" {
-        Write-Host "Deploying to Google Cloud Run..." -ForegroundColor White
+        Write-Host "Deploying to Google Cloud Run via Artifact Registry..." -ForegroundColor White
         $projectId = $envConfig["PROJECT_ID"]
         $serviceAccount = $envConfig["GCP_SERVICE_ACCOUNT"]
         $region = $envConfig["REGION"]
+        $repoName = $envConfig["ARTIFACT_REGISTRY_REPO"]
 
-        if (-not $projectId -or -not $serviceAccount -or -not $region) {
-            Write-Error "One or more required variables (PROJECT_ID, GCP_SERVICE_ACCOUNT, REGION) are missing in .env.cloudrun"
+        if (-not $projectId -or -not $serviceAccount -or -not $region -or -not $repoName) {
+            Write-Error "One or more required variables (PROJECT_ID, GCP_SERVICE_ACCOUNT, REGION, ARTIFACT_REGISTRY_REPO) are missing in .env.cloudrun"
         }
 
-        $gcrImage = "gcr.io/$projectId/${imageName}:${Tag}"
+        $arImage = "${region}-docker.pkg.dev/${projectId}/${repoName}/${imageName}:${Tag}"
 
-        # Tag and Push Image to Google Container Registry
-        Write-Host "Tagging image as $gcrImage" -ForegroundColor Gray
-        & docker tag $fullImageName $gcrImage
-        & gcloud auth configure-docker --quiet
-        Write-Host "Pushing image to GCR..." -ForegroundColor Gray
-        & docker push $gcrImage
-        if ($LASTEXITCODE -ne 0) { Write-Error "Failed to push image to GCR." }
+        # Tag and Push Image to Google Artifact Registry
+        Write-Host "Tagging image as $arImage" -ForegroundColor Gray
+        & docker tag $fullImageName $arImage
+        & gcloud auth configure-docker "${region}-docker.pkg.dev" --quiet
+        Write-Host "Pushing image to Artifact Registry..." -ForegroundColor Gray
+        & docker push $arImage
+        if ($LASTEXITCODE -ne 0) { Write-Error "Failed to push image to Artifact Registry." }
         Write-Host "✓ Image pushed successfully." -ForegroundColor Green
 
-        # Prepare environment variables for deployment
-        $envVarsString = ($envConfig.GetEnumerator() | ForEach-Object { "$($_.Key)='$($_.Value)'" }) -join ','
+        # Prepare environment variables for deployment, filtering out GCP-specific ones
+        $deployEnvVars = $envConfig.Clone()
+        $deployEnvVars.Remove("PROJECT_ID")
+        $deployEnvVars.Remove("GCP_SERVICE_ACCOUNT")
+        $deployEnvVars.Remove("REGION")
+        $deployEnvVars.Remove("ARTIFACT_REGISTRY_REPO")
+        
+        $envVarsString = ($deployEnvVars.GetEnumerator() | ForEach-Object { "$($_.Key)='$($_.Value)'" }) -join ','
 
         # Deploy to Cloud Run
         Write-Host "Deploying service '$imageName' to Cloud Run in region '$region'..." -ForegroundColor White
         
         $deployArgs = @(
             "run", "deploy", $imageName,
-            "--image", $gcrImage,
+            "--image", $arImage,
             "--region", $region,
             "--platform", "managed",
             "--allow-unauthenticated",
             "--port", "8080",
-            "--service-account", $serviceAccount,
-            "--set-env-vars", $envVarsString
+            "--service-account", $serviceAccount
         )
+        if ($envVarsString) {
+            $deployArgs += "--set-env-vars", $envVarsString
+        }
         
         & gcloud @deployArgs
         if ($LASTEXITCODE -eq 0) {

@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse, FileResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from gnosis_ahp.auth import validate_token_from_query
@@ -51,6 +52,9 @@ app = FastAPI(
 
 app.add_exception_handler(AHPException, ahp_exception_handler)
 app.add_middleware(ApertureMiddleware)
+
+# Mount static files
+app.mount("/static", StaticFiles(directory="."), name="static")
 
 
 # --- Template Engine & Tool Registry ---
