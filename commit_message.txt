@@ -1,0 +1,16 @@
+feat: Refactor character tools to agent identity system
+
+This commit introduces a comprehensive refactoring of the character management tools into a more robust and generalized agent identity system.
+
+Key changes:
+- Renamed `character_` tools and files to `agent_` (e.g., `save_character` -> `save_agent`).
+- Changed the storage mechanism to save each agent as an individual file in an `agents/` directory, replacing the previous single `characters.json` file.
+- Introduced a new `embody_agent` tool to generate a system prompt for adopting an agent's persona.
+- Added a `session_required` flag to the tool schema to clearly indicate which tools require an active session.
+- The tool UI now displays a "Session Required" badge.
+
+Bug Fixes:
+- Corrected a critical authentication bug by ensuring the `AHP_TOKEN` is correctly compared.
+- Fixed a bug where the `apply_diff` tool was incompatible with files created by `save_memory`.
+- Resolved multiple syntax and routing errors in `main.py`.
+- Fixed a bug in the core tool logic that was incorrectly passing context arguments to all tools.

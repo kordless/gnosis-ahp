@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Editor - Gnosis AHP</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f7f6; }
+        .container { margin-top: 50px; }
+        .card { box-shadow: 0 4px 8px rgba(0,0,0,0.05); border: none; }
+        .form-control, .form-select { font-family: monospace; }
+        .output-console {
+            background-color: #212529;
+            color: #f8f9fa;
+            font-family: monospace;
+            padding: 1rem;
+            border-radius: 0.25rem;
+            height: 300px;
+            overflow-y: scroll;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="text-center mb-4">
+            <h1>File Editor & Version Control</h1>
+            <p class="lead">A UI for the AHP File Editor tool.</p>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <div class="mb-3">
+                    <label for="filePath" class="form-label">File Path</label>
+                    <input type="text" class="form-control" id="filePath" placeholder="Enter absolute path to file...">
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <button class="btn btn-primary" onclick="getVersions()">Get Versions</button>
+                    <div>
+                        <select class="form-select d-inline-block w-auto" id="versionSelect"></select>
+                        <button class="btn btn-success" onclick="restoreVersion()">Restore Selected</button>
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <div class="mb-3">
+                    <label for="diffText" class="form-label">Diff Content</label>
+                    <textarea class="form-control" id="diffText" rows="10" placeholder="<<<<<<< SEARCH..."></textarea>
+                </div>
+                <button class="btn btn-warning w-100" onclick="applyDiff()">Apply Diff</button>
+
+                <hr class="my-4">
+
+                <h5>Output</h5>
+                <div id="outputConsole" class="output-console">Ready.</div>
+            </div>
+        </div>
+        <div class="text-center mt-4">
+            <a href="/tools_ui" class="btn btn-secondary">Back to Tool Library</a>
+        </div>
+    </div>
+
+    <script>
+        const filePathInput = document.getElementById('filePath');
+        const versionSelect = document.getElementById('versionSelect');
+        const diffTextInput = document.getElementById('diffText');
+        const outputConsole = document.getElementById('outputConsole');
+
+        function log(message, isError = false) {
+            outputConsole.innerHTML = ''; // Clear console
+            const p = document.createElement('p');
+            p.textContent = JSON.stringify(message, null, 2);
+            if (isError) {
+                p.style.color = '#dc3545';
+            }
+            outputConsole.appendChild(p);
+        }
+
+        async function getVersions() {
+            const filePath = filePathInput.value;
+            if (!filePath) {
+                log({ error: "File path is required." }, true);
+                return;
+            }
+            log({ status: "Fetching versions..." });
+
+            try {
+                const response = await fetch(`/get_versions?file_path=${encodeURIComponent(filePath)}`);
+                const data = await response.json();
+                log(data);
+
+                versionSelect.innerHTML = '';
+                if (data.result && data.result.versions) {
+                    data.result.versions.forEach(v => {
+                        if (v.version !== 'current') {
+                            const option = document.createElement('option');
+                            option.value = v.version;
+                            option.textContent = `Version ${v.version} (${v.date})`;
+                            versionSelect.appendChild(option);
+                        }
+                    });
+                }
+            } catch (error) {
+                log({ error: error.message }, true);
+            }
+        }
+
+        async function restoreVersion() {
+            const filePath = filePathInput.value;
+            const version = versionSelect.value;
+            if (!filePath || !version) {
+                log({ error: "File path and a version to restore are required." }, true);
+                return;
+            }
+            log({ status: `Restoring version ${version}...` });
+
+            try {
+                const response = await fetch(`/restore_version?file_path=${encodeURIComponent(filePath)}&version_number=${version}`);
+                const data = await response.json();
+                log(data);
+            } catch (error) {
+                log({ error: error.message }, true);
+            }
+        }
+
+        async function applyDiff() {
+            const filePath = filePathInput.value;
+            const diffText = diffTextInput.value;
+            if (!filePath || !diffText) {
+                log({ error: "File path and diff text are required." }, true);
+                return;
+            }
+            log({ status: "Applying diff..." });
+
+            try {
+                const response = await fetch(`/apply_diff?file_path=${encodeURIComponent(filePath)}&diff_text=${encodeURIComponent(diffText)}`);
+                const data = await response.json();
+                log(data);
+            } catch (error) {
+                log({ error: error.message }, true);
+            }
+        }
+    </script>
+</body>
+</html>

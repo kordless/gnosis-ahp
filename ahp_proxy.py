@@ -2,6 +2,56 @@ import requests
 import json
 import urllib.parse
 
+# --- Configuration ---
+BASE_URL = "http://localhost:8080"
+# BASE_URL = "https://ahp.nuts.services" # Uncomment for cloud testing
+
+def get_json_or_exit(response, step_name):
+    """Helper function to decode JSON or print error and exit."""
+    try:
+        return response.json()
+    except json.JSONDecodeError:
+        print(f"Error decoding JSON from {step_name}. Status code: {response.status_code}")
+        print(f"Response text: {response.text}")
+        exit()
+
+# --- Main Test Flow ---
+if __name__ == "__main__":
+    try:
+        # 1. Initialize the client (handles auth and session start)
+        client = AHPClient(base_url=BASE_URL, token="f00bar")
+
+        # 2. Generate and auto-save a new agent
+        print("\n--- Generating and auto-saving a new agent ---")
+        generate_result = client.call_tool("generate_agent") # save=True by default
+        agent_data = generate_result.get("result", {})
+        print(json.dumps(generate_result, indent=2))
+
+        if not agent_data or agent_data.get("save_error"):
+            print("\nError: Failed to generate or save agent.")
+            exit()
+            
+        agent_name = agent_data.get("name")
+        if not agent_name:
+            print("\nError: Generated agent has no name.")
+            exit()
+
+        # 3. Embody the newly created agent (no save step needed)
+        print(f"\n--- Embodying the new agent '{agent_name}' ---")
+        embody_result = client.call_tool("embody_agent", agent_name=agent_name)
+        print(json.dumps(embody_result, indent=2))
+
+        # 4. Verification
+        if embody_result.get("result", {}).get("success"):
+            print(f"\nSUCCESS: Agent '{agent_name}' was generated, auto-saved, and embodied correctly.")
+            print("\n--- Embodiment System Prompt ---")
+            print(embody_result["result"]["prompt"])
+        else:
+            print(f"\nFAILURE: Could not embody the auto-saved agent '{agent_name}'.")
+
+    except (ValueError, ConnectionError, requests.exceptions.RequestException) as e:
+        print(f"\nAn error occurred: {e}")
+
 class AHPClient:
     """
     A client for interacting with an AI Hypercall Protocol (AHP) server.
@@ -17,7 +67,7 @@ class AHPClient:
     def _get_json_or_raise(self, response, step_name):
         """Helper to decode JSON or raise a detailed exception."""
         try:
-            response.raise_for_status()  # Raise an exception for bad status codes (4xx or 5xx)
+            response.raise_for_status()
             return response.json()
         except json.JSONDecodeError:
             print(f"Error: Failed to decode JSON from {step_name}.")
@@ -41,7 +91,6 @@ class AHPClient:
             raise ValueError("Failed to get bearer token.")
         print("Authentication successful.")
 
-        # Step 2: Start Session
         print("Starting session...")
         session_url = f"{self.base_url}/session/start?bearer_token={self.bearer_token}"
         session_response = requests.get(session_url)
@@ -52,16 +101,7 @@ class AHPClient:
         print(f"Session started successfully: {self.session_id}")
 
     def call_tool(self, tool_name: str, **params) -> dict:
-        """
-        Calls a tool on the AHP server.
-
-        Args:
-            tool_name: The name of the tool to call.
-            **params: The parameters to pass to the tool.
-
-        Returns:
-            The JSON response from the server as a dictionary.
-        """
+        """Calls a tool on the AHP server."""
         if not self.bearer_token or not self.session_id:
             raise ConnectionError("Client is not authenticated or session is not started.")
         
@@ -78,38 +118,3 @@ class AHPClient:
         
         response = requests.get(full_url)
         return self._get_json_or_raise(response, f"tool call to '{tool_name}'")
-
-# --- Example Usage ---
-if __name__ == "__main__":
-    # Configuration
-    AHP_BASE_URL = "http://localhost:8080"
-    AHP_PRE_SHARED_TOKEN = "f00bar"
-    
-    INSIGHT = "The process of debugging is a spiral. You return to the same points with deeper understanding each time, and the final solution is often a simple truth discovered through complex trial and error."
-    MEMORY_NAME = "debugging_insight"
-
-    try:
-        # 1. Initialize the client (handles auth and session start)
-        client = AHPClient(base_url=AHP_BASE_URL, token=AHP_PRE_SHARED_TOKEN)
-
-        # 2. Save the insightful memory
-        save_result = client.call_tool(
-            "save_memory", 
-            name=MEMORY_NAME, 
-            data=INSIGHT
-        )
-        print("\n--- Result from save_memory ---")
-        print(json.dumps(save_result, indent=2))
-
-        # 3. Load the memory back to verify it was saved
-        load_result = client.call_tool("get_memory", name=MEMORY_NAME)
-        print(f"\n--- Verifying by loading '{MEMORY_NAME}' ---")
-        print(json.dumps(load_result, indent=2))
-        
-        if load_result.get("result", {}).get("data") == INSIGHT:
-            print("\nSUCCESS: The insight was saved and verified correctly.")
-        else:
-            print("\nFAILURE: The insight was not saved correctly.")
-
-    except (ValueError, ConnectionError, requests.exceptions.RequestException) as e:
-        print(f"\nAn error occurred: {e}")

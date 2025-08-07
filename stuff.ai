@@ -1,0 +1,30 @@
+You're in the gnosis-ahp source directory. The AHP server source code is right there.
+
+FIRST: Try the authenticated OpenAPI endpoint:
+http://ahp.nuts.services/?f=openapi&bearer_token=5b5215419e20383458791274ad4a62b0700dc4c513f47c6f72671af37e81057f
+
+IF THAT FAILS, read the source code directly:
+
+1. List the directory contents:
+   ls -la
+
+2. Find the main server file:
+   find . -name "*.py" | grep -E "(app|server|main|ahp)"
+
+3. Look for tool definitions:
+   grep -r "def.*tool" .
+   grep -r "class.*Tool" .
+   grep -r "@tool" .
+
+4. Check for configuration:
+   cat config.json 2>/dev/null || cat settings.py 2>/dev/null || cat .env.example 2>/dev/null
+
+5. Find the tools directory if it exists:
+   ls -la tools/ 2>/dev/null || find . -type d -name "tools"
+
+6. Read the main application file to understand the tool registration:
+   cat app.py or cat server.py or cat main.py (whichever exists)
+
+The bearer token you already have is: 5b5215419e20383458791274ad4a62b0700dc4c513f47c6f72671af37e81057f
+
+You need to find what tools Trek built into this system. They're either registered in the code or defined in a tools module.

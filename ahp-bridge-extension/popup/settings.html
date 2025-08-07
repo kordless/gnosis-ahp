@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AHP Bridge Settings</title>
+    <link rel="stylesheet" href="settings.css">
+    <style>
+        body { font-family: sans-serif; width: 300px; padding: 10px; }
+        h3 { margin-top: 0; }
+        fieldset { border: 1px solid #ccc; border-radius: 4px; margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold;}
+        input[type="text"], input[type="password"], input[type="email"] { width: 95%; padding: 5px; margin-bottom: 10px;}
+        input[type="text"]:disabled { background-color: #f0f0f0; }
+        button { margin-top: 10px; padding: 5px 10px; }
+        #status { margin-top: 10px; font-size: 12px; color: green; }
+    </style>
+</head>
+<body>
+    <h3>AHP Bridge Settings</h3>
+    
+    <form id="settings-form">
+        <fieldset>
+            <legend>Authentication</legend>
+            <label for="email">Email Address (as Agent ID):</label>
+            <input type="email" id="email" name="email" required>
+            
+            <label for="pre-shared-key">Pre-shared Key:</label>
+            <input type="password" id="pre-shared-key" name="pre-shared-key" required>
+        </fieldset>
+
+        <fieldset>
+            <legend>AHP Server</legend>
+            <div>
+                <input type="radio" id="server-default" name="server-type" value="default" checked>
+                <label for="server-default" style="display: inline; font-weight: normal;">Default (http://ahp.nuts.services)</label>
+            </div>
+            <div>
+                <input type="radio" id="server-custom" name="server-type" value="custom">
+                <label for="server-custom" style="display: inline; font-weight: normal;">Custom URL:</label>
+                <input type="text" id="custom-server-url" name="custom-server-url" placeholder="e.g., http://localhost:8080">
+            </div>
+        </fieldset>
+        
+        <button type="submit">Save Settings</button>
+    </form>
+    
+    <div id="status"></div>
+
+    <script src="settings.js"></script>
+</body>
+</html>

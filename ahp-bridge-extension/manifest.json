@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "AHP Bridge for Claude",
+  "version": "1.0.0",
+  "description": "Execute AHP tool calls directly from Claude conversations",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "http://ahp.nuts.services/*",
+    "https://ahp.nuts.services/*",
+    "http://localhost:8080/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://claude.ai/*"],
+      "js": ["content.js"],
+      "css": ["styles.css"]
+    },
+    {
+      "matches": ["https://chat.openai.com/*"],
+      "js": ["chatgpt_content.js"],
+      "css": ["styles.css"]
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "AHP Bridge"
+  },
+  "options_page": "popup/settings.html"
+}

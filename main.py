@@ -138,9 +138,30 @@ async def auth_endpoint(token: str, agent_id: str = "default_agent"):
 
 @ui_router.get("/openapi", tags=["AHP Core"])
 @ui_router.get("/schema", tags=["AHP Core"]) # Alias for openapi
-def openapi_endpoint():
-    """Returns the machine-readable API schema."""
-    return JSONResponse(app.openapi())
+async def openapi_endpoint():
+    """
+    Returns the machine-readable API schema, injecting custom AHP metadata.
+    """
+    if app.openapi_schema:
+        return JSONResponse(app.openapi_schema)
+
+    openapi_schema = app.openapi()
+    
+    # Inject custom 'x-ahp-session-required' field for each tool
+    tool_schemas = tool_registry.get_schemas()
+    tool_session_map = {tool['name']: tool.get('x-ahp-session-required', False) for tool in tool_schemas}
+
+    for path, path_item in openapi_schema.get("paths", {}).items():
+        for method, operation in path_item.items():
+            # Tool endpoints are dynamic, so we check the tag
+            if "AHP Tools" in operation.get("tags", []):
+                # The tool name is the last part of the path
+                tool_name = path.split("/")[-1]
+                if tool_name in tool_session_map:
+                    operation["x-ahp-session-required"] = tool_session_map[tool_name]
+
+    app.openapi_schema = openapi_schema
+    return JSONResponse(app.openapi_schema)
 
 @ui_router.get("/tools", tags=["AHP Core"])
 def tools_endpoint():
