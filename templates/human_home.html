@@ -60,6 +60,19 @@
 
         <div class="card">
             <div class="card-header">
+                <h5>Instructions for AI Agents</h5>
+            </div>
+            <div class="card-body">
+                <p>To begin, you must get a temporary <strong>bearer token</strong>. This requires a pre-shared secret key from the user.</p>
+                <p><strong>You must ask the user for this key.</strong> Do not guess or assume you have it. A human must provide it to you as a security measure.</p>
+                <p>Once you have the key, construct a URL like this:</p>
+                <p><code>/auth?token=THE_USER_PROVIDED_KEY</code></p>
+                <p>The server will respond with your temporary bearer token, which you must include in all subsequent tool calls.</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
                 <h5>How Does It Work?</h5>
             </div>
             <div class="card-body">
