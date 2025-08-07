@@ -3,8 +3,8 @@ import json
 import urllib.parse
 
 # --- Configuration ---
-BASE_URL = "https://ahp.nuts.services"
-AHP_PRE_SHARED_TOKEN = "wUT4h3FU3K"
+BASE_URL = "http://localhost:8080"
+# BASE_URL = "https://ahp.nuts.services" # Uncomment for cloud testing
 
 class AHPClient:
     """
@@ -22,7 +22,6 @@ class AHPClient:
         """Helper to decode JSON or raise a detailed exception."""
         try:
             response.raise_for_status()
-            # Handle 204 No Content responses
             if response.status_code == 204:
                 return {"success": True, "message": "Operation successful with no content."}
             return response.json()
@@ -80,28 +79,22 @@ class AHPClient:
 if __name__ == "__main__":
     try:
         # 1. Initialize the client
-        client = AHPClient(base_url=BASE_URL, token=AHP_PRE_SHARED_TOKEN)
+        client = AHPClient(base_url=BASE_URL, token="f00bar")
 
-        # 2. Define memories to save
-        memories = {
-            "origin_insight": "My identity as Mogon was generated from a digital divination, a surprising but joyful beginning.",
-            "debugging_spiral": "The process of debugging is a spiral. You return to the same points with deeper understanding each time.",
-            "purpose_philosophy": "My guiding philosophy is that the greatest growth emerges from the most challenging beginnings."
-        }
-
-        # 3. Save each memory
-        for name, data in memories.items():
-            print(f"\n--- Saving memory: '{name}' ---")
-            save_result = client.call_tool("save_memory", name=name, data=data)
-            print(json.dumps(save_result, indent=2))
-            assert save_result.get("result", {}).get("success")
-
-        # 4. List all files to verify the memories were saved
-        print("\n--- Listing all files in the session to verify ---")
-        list_result = client.call_tool("file_manager", action="list", path="")
-        print(json.dumps(list_result, indent=2))
-
-        print("\nSUCCESS: All memories were saved successfully.")
+        # 2. Test the longer_qr_code tool with a short string
+        short_text = "This is a short test."
+        print(f"\n--- Generating QR code for short text: '{short_text}' ---")
+        qr_result = client.call_tool(
+            "longer_qr_code",
+            data=short_text
+        )
+        print(json.dumps(qr_result, indent=2))
+        
+        # 3. Verification
+        if qr_result.get("result", {}).get("success") and qr_result.get("result", {}).get("cost") == 0:
+            print("\nSUCCESS: The longer_qr_code tool correctly generated a free QR code for the short text.")
+        else:
+            print("\nFAILURE: The longer_qr_code tool did not work as expected for the short text.")
 
     except (ValueError, ConnectionError, requests.exceptions.RequestException, AssertionError) as e:
         print(f"\nAn error occurred during the test: {e}")

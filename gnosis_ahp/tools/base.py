@@ -116,13 +116,13 @@ class FunctionTool(BaseTool):
     async def execute(self, **kwargs) -> ToolResult:
         """Execute the wrapped function."""
         try:
-            # Separate tool arguments from context
+            # Separate tool arguments from context, but ensure 'session' is always passed if the tool needs it.
             tool_args = {k: v for k, v in kwargs.items() if k in self.signature.parameters}
-            
-            # Validate and convert arguments
+            if 'session' in self.signature.parameters and 'session' in kwargs:
+                tool_args['session'] = kwargs['session']
+
             validated_args = self.validate_arguments(**tool_args)
             
-            # Execute function
             if self.is_async:
                 result = await self.func(**validated_args)
             else:
@@ -131,26 +131,23 @@ class FunctionTool(BaseTool):
             return ToolResult(success=True, data=result)
             
         except Exception as e:
-            return ToolResult(
-                success=False,
-                data=None,
-                error=str(e)
-            )
+            return ToolResult(success=False, data=None, error=str(e))
 
     async def execute_streaming(self, **kwargs) -> AsyncGenerator[Dict[str, Any], None]:
         """Execute the wrapped function and stream results."""
         try:
-            # Separate tool arguments from context
+            # Separate tool arguments from context, but ensure 'session' is always passed if the tool needs it.
             tool_args = {k: v for k, v in kwargs.items() if k in self.signature.parameters}
+            if 'session' in self.signature.parameters and 'session' in kwargs:
+                tool_args['session'] = kwargs['session']
+                
             validated_args = self.validate_arguments(**tool_args)
 
             if self.is_async_generator:
-                # Stream from async generator
                 async for chunk in self.func(**validated_args):
                     yield {"type": "chunk", "data": chunk}
-                yield {"type": "final", "data": None} # Signal end of stream
+                yield {"type": "final", "data": None}
             else:
-                # Execute regular function and yield a single final result
                 result = await self.execute(**kwargs)
                 yield {
                     "type": "final",
@@ -159,10 +156,7 @@ class FunctionTool(BaseTool):
                     "success": result.success
                 }
         except Exception as e:
-            yield {
-                "type": "error",
-                "error": str(e)
-            }
+            yield {"type": "error", "error": str(e)}
     
     def get_schema(self) -> Dict[str, Any]:
         """Generate schema from function signature."""

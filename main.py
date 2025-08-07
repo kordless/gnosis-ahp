@@ -107,6 +107,11 @@ async def stream_tool_execution(tool_instance, params, session, tool_name, auth_
 def favicon():
     return Response(status_code=404)
 
+@ui_router.get("/client", response_class=FileResponse)
+async def get_client_proxy():
+    """Serves the ahp_proxy.py script as a reference client implementation."""
+    return "ahp_proxy.py"
+
 @ui_router.get("/robots.txt", response_class=FileResponse)
 async def robots():
     return "robots.txt"

@@ -332,14 +332,14 @@ class StorageService:
     async def list_files(self, prefix: Optional[str] = None, 
                         session_hash: Optional[str] = None) -> List[Dict[str, Union[str, int]]]:
         """
-        List files in storage
-        
+        List files and directories in storage.
+
         Args:
-            prefix: Optional prefix to filter files
-            session_hash: Optional session context
-            
+            prefix: Optional prefix to filter files.
+            session_hash: Optional session context.
+
         Returns:
-            List of file metadata dicts with 'name', 'size', 'modified' keys
+            List of file/dir metadata dicts with 'name', 'type', 'size', 'modified' keys.
         """
         if session_hash:
             search_prefix = self.get_session_path(session_hash)
@@ -349,44 +349,63 @@ class StorageService:
         if prefix:
             search_prefix = f"{search_prefix}/{prefix}"
         
-        files = []
+        items = []
         
         if self._is_cloud:
-            # GCS branch
+            # GCS branch - simulates directories
             def list_gcs_blobs():
                 blob_list = []
-                blobs = self._bucket.list_blobs(prefix=search_prefix)
+                seen_dirs = set()
+                blobs = self._bucket.list_blobs(prefix=search_prefix, delimiter='/')
+                
                 for blob in blobs:
+                    relative_name = blob.name.replace(search_prefix + '/', '').strip('/')
+                    if not relative_name: continue
+                    
                     blob_list.append({
-                        'name': blob.name.replace(search_prefix + '/', ''),
+                        'name': relative_name,
+                        'type': 'file',
                         'size': blob.size,
                         'modified': blob.updated.isoformat() if blob.updated else None
                     })
+                
+                # Handle prefixes (directories)
+                for page in blobs.pages:
+                    for dir_prefix in page.prefixes:
+                        dir_name = dir_prefix.replace(search_prefix + '/', '').strip('/')
+                        if dir_name and dir_name not in seen_dirs:
+                            blob_list.append({
+                                'name': dir_name,
+                                'type': 'directory',
+                                'size': 0,
+                                'modified': None
+                            })
+                            seen_dirs.add(dir_name)
                 return blob_list
             
-            files = await asyncio.to_thread(list_gcs_blobs)
+            items = await asyncio.to_thread(list_gcs_blobs)
         else:
             # Local filesystem branch
             full_path = f"{self._storage_root}/{search_prefix}"
             
-            def list_local_files():
-                local_files = []
-                if os.path.exists(full_path):
+            def list_local_items():
+                local_items = []
+                if os.path.exists(full_path) and os.path.isdir(full_path):
                     for item in os.listdir(full_path):
                         item_path = os.path.join(full_path, item)
-                        if os.path.isfile(item_path):
-                            stat = os.stat(item_path)
-                            local_files.append({
-                                'name': item,
-                                'size': stat.st_size,
-                                'modified': datetime.fromtimestamp(stat.st_mtime).isoformat()
-                            })
-                return local_files
+                        stat = os.stat(item_path)
+                        item_type = 'directory' if os.path.isdir(item_path) else 'file'
+                        local_items.append({
+                            'name': item,
+                            'type': item_type,
+                            'size': stat.st_size,
+                            'modified': datetime.fromtimestamp(stat.st_mtime).isoformat()
+                        })
+                return local_items
             
-            files = await asyncio.to_thread(list_local_files)
+            items = await asyncio.to_thread(list_local_items)
 
-        
-        return files
+        return items
 
     
     def get_file_url(self, filename: str, session_hash: Optional[str] = None) -> str:

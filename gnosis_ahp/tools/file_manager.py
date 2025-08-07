@@ -105,7 +105,7 @@ async def file_manager(
 
         elif action_lower == "list":
             if not path: path = "" # List root by default
-            files = await storage.list_files(prefix=path, session_hash=session_id, recursive=recursive, max_depth=max_depth, show_hidden=show_hidden)
+            files = await storage.list_files(prefix=path, session_hash=session_id)
             return {"success": True, "files": files}
 
         elif action_lower == "move":
