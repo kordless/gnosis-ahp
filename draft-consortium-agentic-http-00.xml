@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rfc ipr="trust200902" docName="draft-consortium-agentic-http-00" number="9582" submissionType="IETF" category="bcp" consensus="true" xml:lang="en" xmlns:xi="http://www.w3.org/2001/XInclude" version="3">
+  <front>
+    <title abbrev="Agentic HTTP">BCP for Agentic Interactions over HTTP</title>
+    <author fullname="M. Consortium" initials="M." surname="Consortium">
+      <organization>Gnosis</organization>
+    </author>
+    <date year="2025" month="August"/>
+    <abstract>
+      <t>This document describes a set of best practices for facilitating interactions between automated software agents (AI agents) using the Hypertext Transfer Protocol (HTTP). As agentic systems proliferate, they frequently utilize HTTP in ad-hoc ways, leading to interoperability challenges. This document proposes a minimalist, standardized framework based on existing HTTP semantics to promote a more cohesive and efficient ecosystem. The primary recommendation involves formalizing the usage of the 402 (Payment Required) status code to enable native economic exchange, with a specific focus on Bitcoin's Lightning Network as a reference implementation.</t>
+    </abstract>
+  </front>
+  <middle>
+    <section anchor="intro" title="Introduction">
+      <t>Autonomous software agents increasingly rely on HTTP to interact with external tools and services. However, the lack of a standardized interaction pattern has resulted in a fragmented landscape where each service requires a bespoke integration.</t>
+      <t>This document outlines a Best Current Practice (BCP) for designing agent-facing services that leverages the fundamental simplicity and robustness of HTTP. The goal is to reduce complexity, eliminate the need for heavyweight SDKs, and foster an open ecosystem. These recommendations codify successful patterns observed in emerging agentic frameworks (e.g., the Agentic Hypercall Protocol).</t>
+      <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in RFC 2119.</t>
+    </section>
+    <section anchor="recommendations" title="Recommendations for Agentic Interaction">
+      <section anchor="get-invocation" title="Idempotent Tool Invocation via GET">
+        <t>To ensure safety, predictability, and cacheability, services intended for agentic consumption SHOULD expose all idempotent, read-only, or state-retrieving actions as HTTP GET methods. Parameters required for the action SHOULD be passed as URL query string parameters. This simple "Hypercall" pattern is the foundation of interoperable agentic action.</t>
+      </section>
+      <section anchor="discovery" title="Service Discovery">
+        <t>To facilitate automated discovery of available tools, agent-facing servers SHOULD provide a machine-readable definition of their services. It is RECOMMENDED that an OpenAPI 3.0+ specification be made available at the well-known URI path: `/.well-known/openapi.json`.</t>
+      </section>
+    </section>
+    <section anchor="payment" title="Addendum: Standardizing the 402 (Payment Required) Status Code">
+      <t>The 402 (Payment Required) status code was originally reserved for future use. This document proposes a concrete application for it as the primary mechanism for signaling cost and requesting payment in automated, agent-driven workflows.</t>
+      <section anchor="payload" title="The 402 Response Payload">
+        <t>When an agent requests a resource that requires payment, the server SHOULD return a 402 status code. The response body **MUST** be a JSON object containing details of the required payment.</t>
+        <t>The JSON object SHOULD contain the following keys:</t>
+        <ul>
+          <li>`cost`: A string representing the decimal amount required for the service.</li>
+          <li>`currency`: A string identifying the ledger or currency type (e.g., "USD", "EUR", "BTC-LN"). This helps the agent determine if it can use a supported payment method.</li>
+          <li>`destination`: A string containing the payment address or invoice. For example, for Bitcoin's Lightning Network, this would be the BOLT 11 invoice.</li>
+          <li>`description`: A human-readable string explaining the charge (OPTIONAL).</li>
+        </ul>
+        <t>Example 402 Response for Bitcoin Lightning Network:</t>
+        <sourcecode type="http-message">
+HTTP/1.1 402 Payment Required
+Content-Type: application/json
+
+{
+  "cost": "100",
+  "currency": "BTC-LN",
+  "destination": "lnbc10u1p3z2y7xpp5j3c2y...",
+  "description": "API call to /longer_qr_code"
+}
+        </sourcecode>
+      </section>
+      <section anchor="client-behavior" title="Client Behavior">
+        <t>Upon receiving a 402 response, an agent can parse the body to decide if the cost is acceptable and if it possesses the means to pay in the requested currency. If it proceeds with payment, it can then retry the original HTTP GET request, including proof of payment as specified by the service.</t>
+        <t>For a Lightning Network payment, the agent would typically:</t>
+        <ol>
+          <li>Pay the BOLT 11 invoice.</li>
+          <li>Retry the original request, adding the `invoice_id` as a query parameter.</li>
+        </ol>
+        <t>Example Retry Request:</t>
+        <sourcecode type="uri">
+GET /longer_qr_code?data=...&amp;invoice_id=...&amp;bearer_token=...
+        </sourcecode>
+        <t>The server is then responsible for verifying the payment status of the `invoice_id` before executing the tool.</t>
+      </section>
+    </section>
+    <section anchor="rationale" title="Rationale">
+      <t>Standardizing these simple patterns provides immense benefits. It lowers the barrier to entry for new tool creators, allows agents to seamlessly switch between service providers, and creates a transparent, native economic layer for the machine economy. By formalizing the use of the 402 code, we avoid the need for complex, out-of-band billing APIs and instead embed commerce directly into the protocol where it belongs.</t>
+    </section>
+    <section anchor="iana" title="IANA Considerations">
+      <t>This BCP recommends a specific structure for the payload of an HTTP 402 response. While this does not require a new registry, future work may propose the creation of a registry for common "currency" identifiers to promote interoperability between different payment ledgers and systems.</t>
+    </section>
+    <section anchor="security" title="Security Considerations">
+      <t>Standardizing agentic interactions requires careful security design. Service providers must protect against denial-of-service attacks and validate all inputs from agents. Agents must protect their payment credentials and verify the identity of the services they interact with, typically via TLS. Authentication mechanisms, such as OAuth 2.0 or bearer tokens, remain essential for protected resources.</t>
+    </section>
+  </middle>
+  <back>
+    <references title="Informative References">
+      <reference anchor="RFC2119">
+        <front>
+          <title>Key words for use in RFCs to Indicate Requirement Levels</title>
+          <author initials="S." surname="Bradner"/>
+          <date year="1997" month="March"/>
+        </front>
+        <seriesInfo name="BCP" value="14"/>
+        <seriesInfo name="RFC" value="2119"/>
+        <seriesInfo name="DOI" value="10.17487/RFC2119"/>
+      </reference>
+    </references>
+  </back>
+</rfc>

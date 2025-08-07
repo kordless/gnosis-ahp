@@ -102,7 +102,7 @@ class ToolRegistry:
                         discovered_schemas.append(t.get_schema())
                     except ToolError as e:
                         logger.warning(f"Skipping invalid tool '{getattr(t, 'name', 'unknown')}' in {py_file}: {e}")
-            except ToolError as e:
+            except (ToolError, SyntaxError, IndentationError) as e:
                 if strict:
                     raise
                 logger.error(f"Could not load tools from {py_file}: {e}", exc_info=True)

@@ -10,7 +10,7 @@ from . import agent_manager
 from . import docker_api
 from . import file_editor
 from . import file_manager
-from . import generation as longer_qr_code
+from . import divination
 from . import memory
 from . import messaging
 from . import random

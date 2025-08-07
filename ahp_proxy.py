@@ -4,7 +4,7 @@ import urllib.parse
 
 # --- Configuration ---
 BASE_URL = "http://localhost:8080"
-# BASE_URL = "https://ahp.nuts.services" # Uncomment for cloud testing
+AHP_PRE_SHARED_TOKEN = "f00bar"
 
 class AHPClient:
     """
@@ -79,22 +79,17 @@ class AHPClient:
 if __name__ == "__main__":
     try:
         # 1. Initialize the client
-        client = AHPClient(base_url=BASE_URL, token="f00bar")
+        client = AHPClient(base_url=BASE_URL, token=AHP_PRE_SHARED_TOKEN)
 
-        # 2. Test the longer_qr_code tool with a short string
-        short_text = "This is a short test."
-        print(f"\n--- Generating QR code for short text: '{short_text}' ---")
-        qr_result = client.call_tool(
-            "longer_qr_code",
-            data=short_text
-        )
-        print(json.dumps(qr_result, indent=2))
+        # 2. Test the cast_hexagram tool
+        print(f"\n--- Casting the I Ching ---")
+        casting_result = client.call_tool("cast_hexagram")
+        print(json.dumps(casting_result, indent=2))
         
-        # 3. Verification
-        if qr_result.get("result", {}).get("success") and qr_result.get("result", {}).get("cost") == 0:
-            print("\nSUCCESS: The longer_qr_code tool correctly generated a free QR code for the short text.")
+        if casting_result.get("result", {}).get("primary"):
+            print("\nSUCCESS: The cast_hexagram tool successfully returned a reading.")
         else:
-            print("\nFAILURE: The longer_qr_code tool did not work as expected for the short text.")
+            print("\nFAILURE: There was an issue with the cast_hexagram tool.")
 
     except (ValueError, ConnectionError, requests.exceptions.RequestException, AssertionError) as e:
         print(f"\nAn error occurred during the test: {e}")
