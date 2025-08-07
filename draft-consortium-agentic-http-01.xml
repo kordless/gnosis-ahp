@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<rfc ipr="trust200902" docName="draft-consortium-agentic-http-00" number="9582" submissionType="IETF" category="bcp" consensus="true" xml:lang="en" xmlns:xi="http://www.w3.org/2001/XInclude" version="3">
+<rfc ipr="trust200902" docName="draft-consortium-agentic-http-01" number="9582" submissionType="IETF" category="bcp" consensus="true" xml:lang="en" xmlns:xi="http://www.w3.org/2001/XInclude" version="3">
   <front>
     <title abbrev="Agentic HTTP">BCP for Agentic Interactions over HTTP</title>
     <author fullname="Kord Campbell" initials="K." surname="Campbell">
@@ -20,12 +20,12 @@
   <middle>
     <section anchor="intro" title="Introduction">
       <t>Autonomous software agents increasingly rely on HTTP to interact with external tools and services. However, the lack of a standardized interaction pattern has resulted in a fragmented landscape where each service requires a bespoke integration.</t>
-      <t>This document outlines a Best Current Practice (BCP) for designing agent-facing services that leverages the fundamental simplicity and robustness of HTTP. The goal is to reduce complexity, eliminate the need for heavyweight SDKs, and foster an open ecosystem. These recommendations codify successful patterns observed in emerging agentic frameworks (e.g., the Agentic Hypercall Protocol).</t>
+      <t>This document outlines a Best Current Practice (BCP) for designing agent-facing services that leverages the fundamental simplicity and robustness of HTTP. The goal is to reduce complexity, eliminate the need for heavyweight SDKs, and foster an open ecosystem. These recommendations codify successful patterns observed in emerging agentic frameworks, most notably the Agentic Hypercall Protocol (AHP), which serves as the reference implementation for this BCP.</t>
       <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in RFC 2119.</t>
     </section>
     <section anchor="recommendations" title="Recommendations for Agentic Interaction">
       <section anchor="get-invocation" title="Idempotent Tool Invocation via GET">
-        <t>To ensure safety, predictability, and cacheability, services intended for agentic consumption SHOULD expose all idempotent, read-only, or state-retrieving actions as HTTP GET methods. Parameters required for the action SHOULD be passed as URL query string parameters. This simple "Hypercall" pattern is the foundation of interoperable agentic action.</t>
+        <t>To ensure safety, predictability, and cacheability, services intended for agentic consumption SHOULD expose all idempotent, read-only, or state-retrieving actions as HTTP GET methods. Parameters required for the action SHOULD be passed as URL query string parameters. This simple "Hypercall" pattern, as defined by AHP, is the foundation of interoperable agentic action.</t>
       </section>
       <section anchor="discovery" title="Service Discovery">
         <t>To facilitate automated discovery of available tools, agent-facing servers SHOULD provide a machine-readable definition of their services. It is RECOMMENDED that an OpenAPI 3.0+ specification be made available at the well-known URI path: `/.well-known/openapi.json`.</t>
