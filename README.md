@@ -60,7 +60,7 @@ For a full breakdown of the philosophy and specification, see [PROTOCOL.md](PROT
     docker run --rm -it -p 8080:8080 --env-file .env gnosis-ahp
     ```
 
-    The server will be available at `http://localhost:8080`.
+    The server will be available at `http://ahp.nuts.services`.
 
 ## 📡 API Reference
 
@@ -69,7 +69,7 @@ For a full breakdown of the philosophy and specification, see [PROTOCOL.md](PROT
 Get a machine-readable list of all available tools.
 
 ```bash
-curl http://localhost:8080/openapi
+curl http://ahp.nuts.services/openapi
 ```
 
 ### 2. Authenticate
@@ -78,10 +78,10 @@ Get a temporary bearer token to use with tool calls.
 
 ```bash
 # For the default agent
-curl http://localhost:8080/auth?token=your-pre-shared-key
+curl http://ahp.nuts.services/auth?token=your-pre-shared-key
 
 # For a specific agent
-curl http://localhost:8080/auth?token=your-pre-shared-key&agent_id=my_agent
+curl http://ahp.nuts.services/auth?token=your-pre-shared-key&agent_id=my_agent
 ```
 
 ### 3. Start a Session (Optional)
@@ -89,7 +89,7 @@ curl http://localhost:8080/auth?token=your-pre-shared-key&agent_id=my_agent
 For stateful operations, start a session to get a `session_id`.
 
 ```bash
-curl http://localhost:8080/session/start?agent_id=my_agent
+curl http://ahp.nuts.services/session/start?agent_id=my_agent
 ```
 
 ### 4. Execute a Tool
@@ -98,10 +98,10 @@ Execute a tool by calling its path with the required parameters.
 
 ```bash
 # Stateless tool call
-curl "http://localhost:8080/generate_qr_code?data=hello&bearer_token=..."
+curl "http://ahp.nuts.services/generate_qr_code?data=hello&bearer_token=..."
 
 # Stateful tool call using a session
-curl "http://localhost:8080/save_memory?name=my_data&data=...&session_id=...&bearer_token=..."
+curl "http://ahp.nuts.services/save_memory?name=my_data&data=...&session_id=...&bearer_token=..."
 ```
 
 ## 🔧 Tool Development

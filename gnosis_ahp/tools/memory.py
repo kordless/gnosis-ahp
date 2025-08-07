@@ -9,7 +9,7 @@ from typing import Dict, Any
 from gnosis_ahp.tools.base import tool
 from gnosis_ahp.core.storage_service import StorageService
 
-@tool(description="Save a piece of data to a named memory within the current session.")
+@tool(description="Save a piece of data to a named memory within the current session.", session_required=True)
 async def save_memory(name: str, data: str, session: Dict[str, Any]) -> Dict[str, Any]:
     """
     Saves a JSON string to a named file within the current session.
@@ -25,13 +25,25 @@ async def save_memory(name: str, data: str, session: Dict[str, Any]) -> Dict[str
     if not all([name, data, session]):
         raise ValueError("'name', 'data', and 'session' are required.")
 
-    storage: StorageService = session["storage"]
-    session_id = session["id"]
+    # The session object is nested within the context passed by the tool endpoint.
+    if 'session' in session:
+        session_data = session['session']
+    else:
+        session_data = session
+
+    # The session object is passed as a JSON string, so we need to parse it first.
+    if isinstance(session_data, str):
+        session_data = json.loads(session_data)
+
+    storage: StorageService = session_data["storage"]
+    session_id = session_data["id"]
     
     safe_name = "".join(c for c in name if c.isalnum() or c in ('-', '_')).rstrip()
     filename = f"{safe_name}.json"
 
-    saved_path = await storage.save_file(content=data, filename=filename, session_hash=session_id)
+    # Wrap the raw string data in a JSON object before saving.
+    json_content = json.dumps({"data": data})
+    saved_path = await storage.save_file(content=json_content.encode('utf-8'), filename=filename, session_hash=session_id)
 
     return {
         "success": True,
@@ -39,7 +51,7 @@ async def save_memory(name: str, data: str, session: Dict[str, Any]) -> Dict[str
         "path": saved_path
     }
 
-@tool(description="Retrieve a piece of data from a named memory within the current session.")
+@tool(description="Retrieve a piece of data from a named memory within the current session.", session_required=True)
 async def get_memory(name: str, session: Dict[str, Any]) -> Dict[str, Any]:
     """
     Retrieves data from a named file within the current session.
@@ -54,8 +66,18 @@ async def get_memory(name: str, session: Dict[str, Any]) -> Dict[str, Any]:
     if not all([name, session]):
         raise ValueError("'name' and 'session' are required.")
 
-    storage: StorageService = session["storage"]
-    session_id = session["id"]
+    # The session object is nested within the context passed by the tool endpoint.
+    if 'session' in session:
+        session_data = session['session']
+    else:
+        session_data = session
+
+    # The session object is passed as a JSON string, so we need to parse it first.
+    if isinstance(session_data, str):
+        session_data = json.loads(session_data)
+
+    storage: StorageService = session_data["storage"]
+    session_id = session_data["id"]
 
     safe_name = "".join(c for c in name if c.isalnum() or c in ('-', '_')).rstrip()
     filename = f"{safe_name}.json"

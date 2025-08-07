@@ -3,44 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Available Tools - AHP Server</title>
+    <title>Available Tools - Gnosis AHP Server</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
-            background-color: #f8f9fa;
+            background-color: #f4f7f6;
+            color: #333;
         }
         .container {
-            margin-top: 40px;
+            margin-top: 50px;
+            margin-bottom: 50px;
         }
         .card {
-            margin-bottom: 20px;
+            margin-bottom: 24px;
+            border: none;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            transition: all 0.3s ease-in-out;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        .card-header {
+            background-color: #007bff;
+            color: white;
+            font-weight: 600;
+            border-bottom: none;
+        }
+        .card-body {
+            padding: 1.5rem;
+        }
+        .param-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .param-list li {
+            background-color: #e9ecef;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 8px;
+            font-family: monospace;
+        }
+        .param-name {
+            font-weight: bold;
+            color: #0056b3;
+        }
+        .param-type {
+            font-style: italic;
+            color: #555;
+        }
+        .required-param::after {
+            content: '*';
+            color: #dc3545;
+            margin-left: 4px;
+        }
+        .page-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .page-header h1 {
+            font-weight: 700;
+        }
+        .page-header p {
+            color: #6c757d;
+        }
+        .form-placeholder {
+            background-color: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            padding: 2rem;
+            text-align: center;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+        .form-placeholder p {
+            color: #6c757d;
+            margin-bottom: 0;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1 class="mb-4">Available Tools</h1>
+        <div class="page-header">
+            <h1>Gnosis AHP Tool Library</h1>
+            <p class="lead">A catalog of available tools for both AI and Human users.</p>
+            <a href="/file_editor" class="btn btn-outline-primary mt-2">Open File Editor UI</a>
+        </div>
+
         {% for tool in tools %}
         <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">{{ tool.name }}</h5>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>{{ tool.name }}</span>
+                {% if tool['x-ahp-session-required'] %}
+                <span class="badge bg-light text-dark">Session Required</span>
+                {% endif %}
             </div>
             <div class="card-body">
                 <p class="card-text">{{ tool.description }}</p>
-                <h6>Parameters:</h6>
-                <ul>
-                    {% for param, schema in tool.parameters.properties.items() %}
-                    <li>
-                        <code>{{ param }}</code> ({{ schema.type }}): {{ schema.get('description', 'No description available.') }}
-                    </li>
-                    {% else %}
-                    <li>This tool takes no parameters.</li>
-                    {% endfor %}
-                </ul>
+                
+                {% if tool.parameters.properties %}
+                    <h6>Parameters:</h6>
+                    <ul class="param-list">
+                        {% for param, schema in tool.parameters.properties.items() %}
+                        <li>
+                            <span class="param-name {% if param in tool.parameters.required %}required-param{% endif %}">{{ param }}</span>
+                            <span class="param-type">({{ schema.type }})</span>
+                            <p class="mb-0 mt-1">{{ schema.get('description', 'No description available.') }}</p>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>This tool takes no parameters.</p>
+                {% endif %}
+
+                <div class="form-placeholder">
+                    <p>Interactive UI form will be available here in a future update.</p>
+                </div>
             </div>
         </div>
         {% endfor %}
-        <a href="/?f=home">Back to Home</a>
+        
+        <div class="text-center mt-4">
+            <a href="/" class="btn btn-secondary">Back to Home</a>
+        </div>
     </div>
 </body>
 </html>

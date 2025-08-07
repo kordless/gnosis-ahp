@@ -1,4 +1,17 @@
-# Tools package
-from .base import BaseTool, FunctionTool, tool, ToolResult
+"""
+Gnosis AHP Tools Package
 
-__all__ = ["BaseTool", "FunctionTool", "tool", "ToolResult"]
+This file explicitly imports all tool modules to ensure they are discoverable
+by the tool registry at startup.
+"""
+
+from . import agent_generator
+from . import agent_manager
+from . import docker_api
+from . import file_editor
+from . import generation
+from . import memory
+from . import messaging
+from . import random
+from . import streaming
+from . import tool_registry

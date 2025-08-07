@@ -36,11 +36,11 @@ async def ahp_exception_handler(request: Request, exc: AHPException):
 
 # --- Pre-defined Exceptions ---
 
-def invalid_token_exception():
+def invalid_token_exception(detail: str = "Invalid or missing pre-shared access token."):
     return AHPException(
         status_code=403,
         code="invalid_access_token",
-        message="Invalid or missing pre-shared access token.",
+        message=detail,
         remedy="Ensure you are providing the correct 'token' query parameter."
     )
 
@@ -57,7 +57,7 @@ def invalid_bearer_token_exception(detail: str = "Invalid or expired token."):
         status_code=401,
         code="invalid_bearer_token",
         message=detail,
-        remedy="Request a new token via the '?f=auth' endpoint."
+        remedy="Request a new token via the '/auth?token=YOUR_PRE_SHARED_KEY' endpoint."
     )
 
 def missing_tool_name_exception():
@@ -87,7 +87,7 @@ def session_not_found_exception(session_id: str):
         status_code=404,
         code="session_not_found",
         message=f"Session ID '{session_id}' not found.",
-        remedy="Start a new session using '?f=session_start'."
+        remedy="Start a new session using the '/session/start' endpoint."
     )
 
 def unknown_function_exception(function_name: str):

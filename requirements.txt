@@ -1,11 +1,7 @@
 fastapi
-uvicorn[standard]
-pyngrok
+uvicorn
 python-dotenv
+google-cloud-storage
 Jinja2
-pytest
 httpx
 qrcode
-Pillow
-google-cloud-storage
-docker

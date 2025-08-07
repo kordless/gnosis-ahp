@@ -84,24 +84,29 @@ class BaseTool(ABC):
 class FunctionTool(BaseTool):
     """Wrapper to convert a regular function into a tool."""
     
-    def __init__(self, func: Callable, name: Optional[str] = None, description: Optional[str] = None, cost: int = 0):
+    def __init__(self, func: Callable, name: Optional[str] = None, description: Optional[str] = None, cost: int = 0, session_required: bool = False):
         """Initialize a function-based tool.        
         Args:
             func: The function to wrap
             name: Tool name (defaults to function name)
             description: Tool description (defaults to function docstring)
             cost: Cost in satoshis to execute the tool
+            session_required: Whether the tool requires a session to operate.
         """
         self.func = func
         self.is_async = inspect.iscoroutinefunction(func)
         self.is_async_generator = inspect.isasyncgenfunction(func)
         self.cost = cost
+        self.session_required = session_required
         
         # Extract name and description
         tool_name = name or func.__name__
         tool_desc = description or (func.__doc__ or "").strip().split('\n')[0]
         
         super().__init__(name=tool_name, description=tool_desc)
+        
+        # Set the name attribute on the instance
+        self.name = tool_name
         
         # Extract type hints for schema generation
         self.type_hints = get_type_hints(func)
@@ -165,7 +170,7 @@ class FunctionTool(BaseTool):
         required = []
         
         for param_name, param in self.signature.parameters.items():
-            if param_name == 'self':
+            if param_name in ['self', 'session']: # Hide session from the public schema
                 continue
                 
             # Get type information
@@ -186,15 +191,17 @@ class FunctionTool(BaseTool):
             if param.default == inspect.Parameter.empty:
                 required.append(param_name)
         
-        return {
+        schema = {
             "name": self.name,
             "description": self.description,
             "parameters": {
                 "type": "object",
                 "properties": properties,
                 "required": required
-            }
+            },
+            "x-ahp-session-required": self.session_required
         }
+        return schema
     
     def _python_type_to_json_type(self, python_type: Any) -> str:
         """Convert Python type to JSON schema type."""
@@ -260,13 +267,14 @@ class DualUseTool(FunctionTool):
             return self.func(*args, **kwargs)
 
 
-def tool(name: Optional[str] = None, description: Optional[str] = None, cost: int = 0):
+def tool(name: Optional[str] = None, description: Optional[str] = None, cost: int = 0, session_required: bool = False):
     """Decorator to convert a function into a tool.
     
     Args:
         name: Optional tool name
         description: Optional tool description
         cost: Cost in satoshis to execute the tool
+        session_required: Whether the tool requires a session to operate.
         
     Example:
         @tool(description="Add two numbers", cost=10)
@@ -280,6 +288,7 @@ def tool(name: Optional[str] = None, description: Optional[str] = None, cost: in
         result = add(1, 2)  # Returns 3
     """
     def decorator(func: Callable) -> DualUseTool:
-        return DualUseTool(func, name=name, description=description, cost=cost)
+        return DualUseTool(func, name=name, description=description, cost=cost, session_required=session_required)
     
     return decorator
+

@@ -10,6 +10,10 @@ COPY requirements.txt .
 # Install any needed packages specified in requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy the streaming tool
+COPY gnosis_ahp/tools/streaming.py gnosis_ahp/tools/streaming.py
+COPY gnosis_ahp/tools/random.py gnosis_ahp/tools/random.py
+
 # Copy the rest of the application's code into the container at /app
 COPY . .
 

@@ -62,6 +62,11 @@ async def docker_api(
                 response = await client.delete(f"/api/images/{image}", params=params)
             elif command == "health":
                 response = await client.get("/health")
+            elif command == "exec" and container_id:
+                exec_command = kwargs.get("exec_command")
+                if not exec_command:
+                    raise ValueError("The 'exec_command' parameter is required for the 'exec' command.")
+                response = await client.post(f"/api/containers/{container_id}/exec", json={"command": exec_command})
             else:
                 raise ValueError(f"Unsupported command: {command}")
 
