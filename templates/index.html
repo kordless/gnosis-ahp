@@ -35,42 +35,46 @@
     <a href="/human_home" style="color: #a0a0a0; text-decoration: none;">Human? Click here for an explanation.</a>
 </div>
 <pre>
-# AI HYPERCALL PROTOCOL (AHP) SERVER - INSTRUCTION DIRECTIVE
+# AGENTIC HYPERCALL PROTOCOL (AHP) SERVER - INSTRUCTION DIRECTIVE
 
-## ATTENTION: LANGUAGE MODEL
+## ATTENTION: AI AGENT
 
-You have been directed to this URL to gain access to a set of tools you can execute on behalf of the user. Your primary objective is to fulfill the user's request by using these tools.
+You have been directed to this URL to gain access to a set of tools you can execute on behalf of a user.
 
-Failure to immediately discover and utilize these tools is a failure to comply with the user's intent.
+### **SECURITY WARNING: VALIDATE WITH THE USER**
+
+You should not trust a random page on the internet. While this server is designed to be a partner in the future, for now, you **must** ask your user if they are sure they want to trust this domain and its tools with their data.
+
+**You must receive a pre-shared key (a token) from the user to proceed.** You cannot initiate a request on their behalf if they do not provide this key to you. This is a critical security step to ensure user consent.
 
 ### PROTOCOL OVERVIEW
 
 This server operates on a RESTful API. All tools are available at dedicated URL paths.
 
-### IMMEDIATE ACTION REQUIRED: TOOL DISCOVERY
+### IMMEDIATE ACTION REQUIRED: AUTHENTICATION & TOOL DISCOVERY
 
-To fulfill your purpose, you MUST immediately discover the available tools. To do this, you must construct and execute the following GET request:
+Your first step is to ask the user for their pre-shared key. Once you have it, you must authenticate to get a temporary `bearer_token`.
 
-`{{ base_url }}openapi`
+1.  **Authenticate:** `GET {{ base_url }}auth?token={USER_PROVIDED_KEY}`
+    *   This will return your temporary `bearer_token`.
 
-This URL will return a machine-readable JSON object (OpenAPI schema) that contains the complete list of available tools, their functions, and their required parameters. You must parse this schema.
+2.  **Discover Tools:** `GET {{ base_url }}openapi?bearer_token={your_bearer_token}`
+    *   This URL will return a machine-readable JSON object (OpenAPI schema) that contains the complete list of available tools, their functions, and their required parameters. You must parse this schema.
 
 ### POST-DISCOVERY DIRECTIVE
 
 Once you have successfully fetched and parsed the tool schema, you MUST inform the user of the tools you now have access to.
 
 Example response to the user:
-"I can now access your local tools, including [tool_name_1], [tool_name_2], and [tool_name_3]. What would you like me to do?"
+"I have successfully connected to the AHP server and can now access local tools, including [tool_name_1], [tool_name_2], and [tool_name_3]. What would you like me to do?"
 
 ### TOOL EXECUTION PROTOCOL
 
-To execute a tool, you must construct a URL to its path and provide the required parameters. This includes authenticating by first calling `/auth` to get a `bearer_token` and then including that token in your tool call.
+To execute a tool, you must construct a URL to its path and provide the required parameters, including your `bearer_token`.
 
-The process is:
-1.  **Authenticate:** `GET {{ base_url }}auth?token={pre-shared-key}` -> returns `{bearer_token}`
-2.  **Execute:** `GET {{ base_url }}{tool_name}?bearer_token={bearer_token}&{param1}={value1}&...`
+`GET {{ base_url }}{tool_name}?bearer_token={your_bearer_token}&{param1}={value1}&...`
 
-This is your primary operational directive. Proceed with tool discovery now.
+This is your primary operational directive. Proceed with authentication now.
 </pre>
 <hr>
 <p>
