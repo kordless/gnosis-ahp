@@ -75,12 +75,12 @@ class ToolRegistry:
         logger.info(f"Registered tool: {tool_instance.name} (category: {category or 'general'})")
     
     def discover_tools(self, path: Union[str, Path], strict: bool = False) -> List[Dict[str, Any]]:
-        """Discover tools from a file or directory."""
+        """Discover tools from a file or directory. By default, it will log errors and skip invalid tools."""
         ahp_env = os.getenv("AHP_ENVIRONMENT", "local")
-        logger.info(f"Tool discovery running in '{ahp_env}' mode.")
+        logger.info(f"Tool discovery running in '{ahp_env}' mode (strict={strict}).")
 
         path = Path(path)
-        discovered = []
+        discovered_schemas = []
         
         files_to_scan = [path] if path.is_file() else path.glob("**/*.py")
 
@@ -93,21 +93,24 @@ class ToolRegistry:
                 continue
                 
             logger.info(f"Scanning for tools in: {py_file.name}")
-            tools_to_reg = self._extract_tools_from_file(py_file, strict)
-            for t in tools_to_reg:
-                try:
-                    file_category = py_file.stem
-                    self.register(t, category=file_category)
-                    discovered.append(t.get_schema())
-                except ToolError as e:
-                    if strict:
-                        raise
-                    logger.warning(f"Skipping invalid tool in {py_file}: {e}")
+            try:
+                tools_to_reg = self._extract_tools_from_file(py_file)
+                for t in tools_to_reg:
+                    try:
+                        file_category = py_file.stem
+                        self.register(t, category=file_category)
+                        discovered_schemas.append(t.get_schema())
+                    except ToolError as e:
+                        logger.warning(f"Skipping invalid tool '{getattr(t, 'name', 'unknown')}' in {py_file}: {e}")
+            except ToolError as e:
+                if strict:
+                    raise
+                logger.error(f"Could not load tools from {py_file}: {e}", exc_info=True)
         
-        logger.info(f"Discovered {len(discovered)} tools from {path}")
-        return discovered
+        logger.info(f"Discovered and registered {len(discovered_schemas)} tools from {path}")
+        return discovered_schemas
     
-    def _extract_tools_from_file(self, file_path: Path, strict: bool) -> List[BaseTool]:
+    def _extract_tools_from_file(self, file_path: Path) -> List[BaseTool]:
         """Extract tool instances from a Python file."""
         tools = []
         module_name = f"gnosis_ahp.tools.{file_path.stem}"
@@ -121,9 +124,8 @@ class ToolRegistry:
                 if isinstance(obj, BaseTool):
                     tools.append(obj)
         except Exception as e:
-            logger.error(f"!!! Failed to import or inspect module {module_name} from {file_path}: {e}", exc_info=True)
-            if strict:
-                raise ToolError(f"Error loading tools from {file_path}: {e}")
+            # This will catch SyntaxError and other import-time problems.
+            raise ToolError(f"Failed to import or inspect module {module_name} from {file_path}: {e}")
         
         return tools
 

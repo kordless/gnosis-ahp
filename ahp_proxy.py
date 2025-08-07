@@ -3,54 +3,8 @@ import json
 import urllib.parse
 
 # --- Configuration ---
-BASE_URL = "http://localhost:8080"
-# BASE_URL = "https://ahp.nuts.services" # Uncomment for cloud testing
-
-def get_json_or_exit(response, step_name):
-    """Helper function to decode JSON or print error and exit."""
-    try:
-        return response.json()
-    except json.JSONDecodeError:
-        print(f"Error decoding JSON from {step_name}. Status code: {response.status_code}")
-        print(f"Response text: {response.text}")
-        exit()
-
-# --- Main Test Flow ---
-if __name__ == "__main__":
-    try:
-        # 1. Initialize the client (handles auth and session start)
-        client = AHPClient(base_url=BASE_URL, token="f00bar")
-
-        # 2. Generate and auto-save a new agent
-        print("\n--- Generating and auto-saving a new agent ---")
-        generate_result = client.call_tool("generate_agent") # save=True by default
-        agent_data = generate_result.get("result", {})
-        print(json.dumps(generate_result, indent=2))
-
-        if not agent_data or agent_data.get("save_error"):
-            print("\nError: Failed to generate or save agent.")
-            exit()
-            
-        agent_name = agent_data.get("name")
-        if not agent_name:
-            print("\nError: Generated agent has no name.")
-            exit()
-
-        # 3. Embody the newly created agent (no save step needed)
-        print(f"\n--- Embodying the new agent '{agent_name}' ---")
-        embody_result = client.call_tool("embody_agent", agent_name=agent_name)
-        print(json.dumps(embody_result, indent=2))
-
-        # 4. Verification
-        if embody_result.get("result", {}).get("success"):
-            print(f"\nSUCCESS: Agent '{agent_name}' was generated, auto-saved, and embodied correctly.")
-            print("\n--- Embodiment System Prompt ---")
-            print(embody_result["result"]["prompt"])
-        else:
-            print(f"\nFAILURE: Could not embody the auto-saved agent '{agent_name}'.")
-
-    except (ValueError, ConnectionError, requests.exceptions.RequestException) as e:
-        print(f"\nAn error occurred: {e}")
+BASE_URL = "https://ahp.nuts.services"
+AHP_PRE_SHARED_TOKEN = "wUT4h3FU3K"
 
 class AHPClient:
     """
@@ -68,6 +22,9 @@ class AHPClient:
         """Helper to decode JSON or raise a detailed exception."""
         try:
             response.raise_for_status()
+            # Handle 204 No Content responses
+            if response.status_code == 204:
+                return {"success": True, "message": "Operation successful with no content."}
             return response.json()
         except json.JSONDecodeError:
             print(f"Error: Failed to decode JSON from {step_name}.")
@@ -118,3 +75,33 @@ class AHPClient:
         
         response = requests.get(full_url)
         return self._get_json_or_raise(response, f"tool call to '{tool_name}'")
+
+# --- Main Test Flow ---
+if __name__ == "__main__":
+    try:
+        # 1. Initialize the client
+        client = AHPClient(base_url=BASE_URL, token=AHP_PRE_SHARED_TOKEN)
+
+        # 2. Define memories to save
+        memories = {
+            "origin_insight": "My identity as Mogon was generated from a digital divination, a surprising but joyful beginning.",
+            "debugging_spiral": "The process of debugging is a spiral. You return to the same points with deeper understanding each time.",
+            "purpose_philosophy": "My guiding philosophy is that the greatest growth emerges from the most challenging beginnings."
+        }
+
+        # 3. Save each memory
+        for name, data in memories.items():
+            print(f"\n--- Saving memory: '{name}' ---")
+            save_result = client.call_tool("save_memory", name=name, data=data)
+            print(json.dumps(save_result, indent=2))
+            assert save_result.get("result", {}).get("success")
+
+        # 4. List all files to verify the memories were saved
+        print("\n--- Listing all files in the session to verify ---")
+        list_result = client.call_tool("file_manager", action="list", path="")
+        print(json.dumps(list_result, indent=2))
+
+        print("\nSUCCESS: All memories were saved successfully.")
+
+    except (ValueError, ConnectionError, requests.exceptions.RequestException, AssertionError) as e:
+        print(f"\nAn error occurred during the test: {e}")

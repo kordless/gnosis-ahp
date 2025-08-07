@@ -1,12 +1,13 @@
 """
 AHP Tool for interacting with the Gnosis Docker API.
 """
+import os
 import httpx
 from typing import Dict, Any, Optional
 
 from gnosis_ahp.tools.base import tool
 
-DOCKER_API_URL = "http://host.docker.internal:5680"
+DOCKER_API_URL = os.getenv("DOCKER_API_URL", "http://host.docker.internal:5680")
 
 @tool(description="Interact with the Gnosis Docker API to manage containers and images.")
 async def docker_api(
@@ -71,6 +72,11 @@ async def docker_api(
                 raise ValueError(f"Unsupported command: {command}")
 
             response.raise_for_status()
+            
+            # A successful restart returns a 204 No Content, so the body is empty.
+            if response.status_code == 204:
+                return {"success": True, "message": f"Container '{container_id}' {command}ed successfully."}
+                
             return response.json()
 
         except httpx.HTTPStatusError as e:

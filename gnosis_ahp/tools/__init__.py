@@ -9,6 +9,7 @@ from . import agent_generator
 from . import agent_manager
 from . import docker_api
 from . import file_editor
+from . import file_manager
 from . import generation
 from . import memory
 from . import messaging

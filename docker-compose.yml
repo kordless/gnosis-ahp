@@ -10,6 +10,8 @@ services:
       - "8080:8080"
     volumes:
       - .:/app
+    networks:
+      - gnosis-network
     environment:
       # Non-secret environment variables can be defined here.
       # Secret variables (like AHP_TOKEN) are loaded from the .env file.
@@ -17,3 +19,7 @@ services:
       - HOST=0.0.0.0
       # If you have an NGROK token, you can add it here to test the tunnel
       # - NGROK_AUTHTOKEN=your_ngrok_authtoken
+
+networks:
+  gnosis-network:
+    external: true
