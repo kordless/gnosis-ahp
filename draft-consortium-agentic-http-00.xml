@@ -9,6 +9,9 @@
     <abstract>
       <t>This document describes a set of best practices for facilitating interactions between automated software agents (AI agents) using the Hypertext Transfer Protocol (HTTP). As agentic systems proliferate, they frequently utilize HTTP in ad-hoc ways, leading to interoperability challenges. This document proposes a minimalist, standardized framework based on existing HTTP semantics to promote a more cohesive and efficient ecosystem. The primary recommendation involves formalizing the usage of the 402 (Payment Required) status code to enable native economic exchange, with a specific focus on Bitcoin's Lightning Network as a reference implementation.</t>
     </abstract>
+    <note title="Status of This Memo">
+      <t>This memo documents a Best Current Practice for the Internet community. It does not specify an Internet standard of any kind. Distribution of this memo is unlimited.</t>
+    </note>
   </front>
   <middle>
     <section anchor="intro" title="Introduction">
