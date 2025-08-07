@@ -2,8 +2,12 @@
 <rfc ipr="trust200902" docName="draft-consortium-agentic-http-00" number="9582" submissionType="IETF" category="bcp" consensus="true" xml:lang="en" xmlns:xi="http://www.w3.org/2001/XInclude" version="3">
   <front>
     <title abbrev="Agentic HTTP">BCP for Agentic Interactions over HTTP</title>
-    <author fullname="M. Consortium" initials="M." surname="Consortium">
-      <organization>Gnosis</organization>
+    <author fullname="Kord Campbell" initials="K." surname="Campbell">
+      <organization>DeepBlue Dynamics</organization>
+      <address>
+        <email>kordless@gmail.com</email>
+        <country>USA</country>
+      </address>
     </author>
     <date year="2025" month="August"/>
     <abstract>
