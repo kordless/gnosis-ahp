@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<rfc ipr="trust200902" docName="draft-consortium-agentic-http-01" number="9582" submissionType="IETF" category="bcp" consensus="true" xml:lang="en" xmlns:xi="http://www.w3.org/2001/XInclude" version="3">
+<rfc ipr="trust200902" docName="draft-consortium-agentic-http-02" number="9582" submissionType="IETF" category="bcp" consensus="true" xml:lang="en" xmlns:xi="http://www.w3.org/2001/XInclude" version="3">
   <front>
     <title abbrev="Agentic HTTP">A Best Current Practice for Agentic Interactions over HTTP</title>
     <author fullname="Kord Campbell" initials="K." surname="Campbell">
@@ -11,7 +11,7 @@
     </author>
     <date year="2025" month="August"/>
     <abstract>
-      <t>This document describes a set of best practices for facilitating interactions between automated software agents (AI agents) using the Hypertext Transfer Protocol (HTTP). As agentic systems proliferate, they frequently utilize HTTP in ad-hoc ways, leading to interoperability challenges and the rise of proprietary, "walled garden" ecosystems. This document proposes a minimalist, standardized framework based on existing HTTP semantics to promote a more cohesive, efficient, and open ecosystem. The primary recommendations codify the principles of the Agentic Hypercall Protocol (AHP), including tool invocation via GET requests and the formalization of the 402 (Payment Required) status code to enable a native economic layer for the machine economy.</t>
+      <t>This document describes a set of best practices for facilitating interactions between automated software agents (AI agents) using the Hypertext Transfer Protocol (HTTP). As agentic systems proliferate, they frequently utilize HTTP in ad-hoc ways, leading to interoperability challenges and the rise of proprietary, "walled garden" ecosystems. This document proposes a minimalist, standardized framework based on existing HTTP semantics to promote a more cohesive, efficient, and open ecosystem. The primary recommendations codify the principles of the Agentic Hypercall Protocol (AHP), including tool invocation via GET requests, a stateless authentication scheme, and the formalization of the 402 (Payment Required) status code to enable a native economic layer for the machine economy.</t>
     </abstract>
     <note title="Status of This Memo">
       <t>This memo documents a Best Current Practice for the Internet community. It does not specify an Internet standard of any kind. Distribution of this memo is unlimited.</t>
@@ -24,21 +24,32 @@
       <t>These recommendations codify the successful patterns of the Agentic Hypercall Protocol (AHP), which serves as the reference implementation for this BCP.</t>
       <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in BCP 14, RFC 2119.</t>
     </section>
-    <section anchor="recommendations" title="2. The Agentic Hypercall Protocol (AHP)">
+    <section anchor="recommendations" title="2. Core Protocol">
         <t>The core principle of this BCP is the Agentic Hypercall: a simple, RESTful pattern for tool invocation.</t>
         <blockquote cite="https://github.com/kordless/gnosis-ahp/blob/main/MANIFESTO.md">
             All actions are GET requests. Tools are paths. Parameters are query strings.
         </blockquote>
-      <section anchor="get-invocation" title="2.1. Idempotent Tool Invocation via GET">
-        <t>To ensure safety, predictability, and cacheability, services intended for agentic consumption SHOULD expose all idempotent, read-only, or state-retrieving actions as HTTP GET methods. The tool to be invoked MUST be identified by the URI path. Parameters required for the action SHOULD be passed as URL query string parameters.</t>
+      <section anchor="get-invocation" title="2.1. Tool Invocation">
+        <t>To ensure safety, predictability, and cacheability, services intended for agentic consumption MUST expose all idempotent, read-only, or state-retrieving actions as HTTP GET methods. The specific tool to be invoked MUST be identified by the URI path. All parameters required for the action MUST be passed as URL query string parameters.</t>
       </section>
       <section anchor="discovery" title="2.2. Service Discovery">
-        <t>To facilitate automated discovery of available tools, agent-facing servers SHOULD provide a machine-readable definition of their services. It is RECOMMENDED that an OpenAPI 3.0+ specification be made available at a stable, well-known URI path, such as `/openapi` or `/.well-known/openapi.json`.</t>
+        <t>To facilitate automated discovery of available tools, agent-facing servers MUST provide a machine-readable definition of their services. It is RECOMMENDED that an OpenAPI 3.0+ specification be made available at a stable, well-known URI path, such as `/openapi` or `/.well-known/openapi.json`.</t>
       </section>
     </section>
-    <section anchor="payment" title="3. The Aperture Principle: A Native Economic Layer">
+    <section anchor="authentication" title="3. Authentication">
+        <t>To secure protected resources, this BCP recommends a two-step, stateless authentication scheme.</t>
+        <section anchor="auth-step1" title="3.1. Step 1: Exchange Pre-Shared Key for a Bearer Token">
+            <t>An agent MUST first obtain a temporary bearer token by making a GET request to a dedicated authentication endpoint (e.g., `/auth`). This request MUST include a pre-shared key, provided by the human user, as a query parameter (e.g., `?token=USER_PROVIDED_KEY`).</t>
+            <t>The server MUST validate this key. Upon success, it MUST return a JSON object containing the temporary `bearer_token`.</t>
+        </section>
+        <section anchor="auth-step2" title="3.2. Step 2: Use Bearer Token for Tool Calls">
+            <t>For all subsequent calls to protected tool endpoints, the agent MUST include the `bearer_token` as a query parameter.</t>
+            <t>The bearer token SHOULD be a stateless, signed token (e.g., a simplified JWT) containing claims such as an agent identifier and an expiration timestamp. This allows any server in a federated system to verify the token without needing access to a central token store.</t>
+        </section>
+    </section>
+    <section anchor="payment" title="4. The Aperture Principle: A Native Economic Layer">
         <t>A tool has intrinsic value. To foster a healthy and honest market for digital services, this BCP proposes the "Aperture Principle": a tool can declare its own cost, and the network must honor it. This is achieved by formalizing the use of the `402 (Payment Required)` status code.</t>
-      <section anchor="payload" title="3.1. The 402 Response Payload">
+      <section anchor="payload" title="4.1. The 402 Response Payload">
         <t>When an agent requests a resource that requires payment, the server SHOULD return a 402 status code. The response body **MUST** be a JSON object containing details of the required payment.</t>
         <t>The JSON object SHOULD contain the following keys:</t>
         <ul>
@@ -60,18 +71,18 @@ Content-Type: application/json
 }
         </sourcecode>
       </section>
-      <section anchor="client-behavior" title="3.2. Client Behavior">
+      <section anchor="client-behavior" title="4.2. Client Behavior">
         <t>Upon receiving a 402 response, an agent can parse the body to decide if the cost is acceptable and if it possesses the means to pay. If it proceeds, it can then retry the original HTTP GET request, including proof of payment as specified by the service (e.g., in a new `Authorization` header or as a query parameter like `invoice_id`).</t>
       </section>
     </section>
-    <section anchor="rationale" title="4. Rationale">
+    <section anchor="rationale" title="5. Rationale">
       <t>Standardizing these simple patterns provides immense benefits. It lowers the barrier to entry for new tool creators, allows agents to seamlessly switch between service providers, and creates a transparent, native economic layer for the machine economy. By formalizing the use of the 402 code, we avoid the need for complex, out-of-band billing APIs and instead embed commerce directly into the protocol where it belongs, fostering a federated world of sovereign, interoperable nodes.</t>
     </section>
-    <section anchor="iana" title="5. IANA Considerations">
+    <section anchor="iana" title="6. IANA Considerations">
       <t>This BCP recommends a specific structure for the payload of an HTTP 402 response. Future work may propose the creation of a registry for common "currency" identifiers to promote interoperability between different payment systems.</t>
     </section>
-    <section anchor="security" title="6. Security Considerations">
-      <t>Service providers must protect against denial-of-service attacks and validate all inputs from agents. Agents must protect their payment credentials and verify the identity of the services they interact with, typically via TLS. Authentication mechanisms, such as bearer tokens, remain essential for protected resources.</t>
+    <section anchor="security" title="7. Security Considerations">
+      <t>Service providers must protect against denial-of-service attacks and validate all inputs from agents. Agents must protect their payment credentials and verify the identity of the services they interact with, typically via TLS. The stateless bearer token scheme is the RECOMMENDED method for securing protected resources.</t>
     </section>
   </middle>
   <back>
