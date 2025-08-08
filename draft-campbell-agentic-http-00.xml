@@ -1,15 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<rfc ipr="trust200902" docName="draft-campbell-agentic-http-00" submissionType="IETF" category="bcp" consensus="true" xml:lang="en" xmlns:xi="http://www.w3.org/2001/XInclude" version="3">
+<rfc ipr="trust200902" docName="draft-campbell-agentic-http-00" number="9582" submissionType="IETF" category="bcp" consensus="true" xml:lang="en" xmlns:xi="http://www.w3.org/2001/XInclude" version="3">
   <front>
     <title abbrev="Agentic HTTP">A Best Current Practice for Agentic Interactions over HTTP</title>
     <author fullname="Kord Campbell" initials="K." surname="Campbell">
       <organization>DeepBlue Dynamics</organization>
       <address>
         <postal>
-          <street></street>
-          <city></city>
-          <region></region>
-          <code></code>
           <country>USA</country>
         </postal>
         <email>kordless@gmail.com</email>
@@ -19,13 +15,16 @@
     <abstract>
       <t>This document describes a set of best practices for facilitating interactions between automated software agents (AI agents) using the Hypertext Transfer Protocol (HTTP). As agentic systems proliferate, they frequently utilize HTTP in ad-hoc ways, leading to interoperability challenges and the rise of proprietary, "walled garden" ecosystems. This document proposes a minimalist, standardized framework based on existing HTTP semantics to promote a more cohesive, efficient, and open ecosystem. The primary recommendations codify the principles of the Agentic Hypercall Protocol (AHP), including tool invocation via GET requests, a stateless authentication scheme, and the formalization of the 402 (Payment Required) status code to enable a native economic layer for the machine economy.</t>
     </abstract>
+    <note title="Status of This Memo">
+      <t>This memo documents a Best Current Practice for the Internet community. It does not specify an Internet standard of any kind. Distribution of this memo is unlimited.</t>
+    </note>
   </front>
   <middle>
     <section anchor="intro" title="1. Introduction">
       <t>Autonomous software agents increasingly rely on HTTP to interact with external tools and services. However, the lack of a standardized interaction pattern has resulted in a fragmented landscape where each service requires a bespoke integration, often demanding fealty to a complex SDK or proprietary middleware. This trend risks creating a new "tyranny of the SDK," carving the nascent machine economy into walled gardens that stifle innovation and interoperability.</t>
       <t>This document outlines a Best Current Practice (BCP) for designing agent-facing services that rejects this contrived complexity and returns to first principles. It leverages the fundamental simplicity and robustness of HTTP as the primal protocol for agentic interaction. The goal is to reduce complexity, eliminate the need for heavyweight SDKs, and foster an open, federated ecosystem where the agent is treated as the primary user.</t>
       <t>These recommendations codify the successful patterns of the Agentic Hypercall Protocol (AHP), which serves as the reference implementation for this BCP.</t>
-      <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in BCP 14, RFC 2119 <xref target="RFC2119"/>.</t>
+      <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in BCP 14, RFC 2119.</t>
     </section>
     <section anchor="recommendations" title="2. Core Protocol">
         <t>The core principle of this BCP is the Agentic Hypercall: a simple, RESTful pattern for tool invocation.</t>
