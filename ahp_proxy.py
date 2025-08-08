@@ -1,10 +1,16 @@
 import requests
 import json
 import urllib.parse
+import argparse
+from pathlib import Path
 
 # --- Configuration ---
-BASE_URL = "http://localhost:8080"
-AHP_PRE_SHARED_TOKEN = "f00bar"
+URL_MAP = {
+    "local": "http://localhost:8080",
+    "cloud": "https://ahp.nuts.services"
+}
+TOKEN_FILE = Path.home() / ".ahp_token"
+SESSION_FILE = Path.home() / ".ahp_session"
 
 class AHPClient:
     """
@@ -77,19 +83,32 @@ class AHPClient:
 
 # --- Main Test Flow ---
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="A client for the AHP server.")
+    parser.add_argument("--env", default="local", choices=["local", "cloud"], help="The environment to target.")
+    parser.add_argument("--prompt", default="What is the capital of France?", help="The prompt to send to the Ollama model.")
+    args = parser.parse_args()
+
     try:
         # 1. Initialize the client
-        client = AHPClient(base_url=BASE_URL, token=AHP_PRE_SHARED_TOKEN)
+        client = AHPClient(base_url=URL_MAP[args.env], token="linkedinPROMO1" if args.env == "cloud" else "f00bar")
 
-        # 2. Test the cast_hexagram tool
-        print(f"\n--- Casting the I Ching ---")
-        casting_result = client.call_tool("cast_hexagram")
-        print(json.dumps(casting_result, indent=2))
+        # 2. Test the talk_to_ollama tool
+        model = "qwen2:7b"
+        prompt = args.prompt
+        print(f"\n--- Sending prompt to {model}: '{prompt}' ---")
+        ollama_result = client.call_tool(
+            "talk_to_ollama",
+            model=model,
+            prompt=prompt
+        )
+        print(json.dumps(ollama_result, indent=2))
         
-        if casting_result.get("result", {}).get("primary"):
-            print("\nSUCCESS: The cast_hexagram tool successfully returned a reading.")
+        # 3. Verification
+        if ollama_result.get("result", {}).get("success"):
+            print(f"\nSUCCESS: The talk_to_ollama tool successfully received a response.")
+            print(f"Response: {ollama_result['result']['response']}")
         else:
-            print("\nFAILURE: There was an issue with the cast_hexagram tool.")
+            print(f"\nFAILURE: The talk_to_ollama tool did not work as expected.")
 
     except (ValueError, ConnectionError, requests.exceptions.RequestException, AssertionError) as e:
         print(f"\nAn error occurred during the test: {e}")
