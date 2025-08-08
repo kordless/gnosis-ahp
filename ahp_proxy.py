@@ -85,30 +85,29 @@ class AHPClient:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="A client for the AHP server.")
     parser.add_argument("--env", default="local", choices=["local", "cloud"], help="The environment to target.")
-    parser.add_argument("--prompt", default="What is the capital of France?", help="The prompt to send to the Ollama model.")
     args = parser.parse_args()
 
     try:
         # 1. Initialize the client
         client = AHPClient(base_url=URL_MAP[args.env], token="linkedinPROMO1" if args.env == "cloud" else "f00bar")
 
-        # 2. Test the talk_to_ollama tool
-        model = "qwen2:7b"
-        prompt = args.prompt
-        print(f"\n--- Sending prompt to {model}: '{prompt}' ---")
-        ollama_result = client.call_tool(
-            "talk_to_ollama",
-            model=model,
-            prompt=prompt
+        # 2. Test the network connection to the Ollama server
+        host = "ollama.nuts.services"
+        port = 11434
+        print(f"\n--- Testing network connectivity to {host}:{port} ---")
+        network_result = client.call_tool(
+            "network_test",
+            host=host,
+            port=port
         )
-        print(json.dumps(ollama_result, indent=2))
+        print(json.dumps(network_result, indent=2))
         
         # 3. Verification
-        if ollama_result.get("result", {}).get("success"):
-            print(f"\nSUCCESS: The talk_to_ollama tool successfully received a response.")
-            print(f"Response: {ollama_result['result']['response']}")
+        if network_result.get("result", {}).get("success"):
+            print(f"\nSUCCESS: The server can successfully connect to {host}:{port}.")
         else:
-            print(f"\nFAILURE: The talk_to_ollama tool did not work as expected.")
+            print(f"\nFAILURE: The server cannot connect to {host}:{port}.")
+            print(f"Error details: {network_result.get('result', {}).get('details')}")
 
     except (ValueError, ConnectionError, requests.exceptions.RequestException, AssertionError) as e:
         print(f"\nAn error occurred during the test: {e}")

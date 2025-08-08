@@ -19,7 +19,7 @@ base_url_env = os.getenv("OLLAMA_BASE_URL", "http://ollama.nuts.services:11434")
 # Strip single and double quotes that might have been accidentally included
 base_url_env = base_url_env.strip("'\"")
 
-OLLAMA_BASE_URL = "http://host.docker.internal:11434" if AHP_ENVIRONMENT == "local" else base_url_env
+OLLAMA_BASE_URL = "http://host.docker.internal:11434" if AHP_ENVIRONMENT == "local" else "https://ollama.nuts.services"
 
 
 # Log the configuration for debugging
