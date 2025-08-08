@@ -1,5 +1,5 @@
 """
-FastAPI Middleware for Project Aperture
+FastAPI Middleware for Project Aperture and Content-Type enforcement.
 """
 from fastapi import Request, Response
 from fastapi.responses import JSONResponse
@@ -8,6 +8,17 @@ from starlette.types import ASGIApp
 
 from gnosis_ahp.tools.tool_registry import get_global_registry
 from gnosis_ahp.core.aperture_service import get_aperture_service
+
+class ContentTypeMiddleware(BaseHTTPMiddleware):
+    """
+    Ensures that every response has a Content-Type header.
+    Defaults to application/json if no other content type is set.
+    """
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        if "content-type" not in response.headers:
+            response.headers["Content-Type"] = "application/json"
+        return response
 
 class ApertureMiddleware(BaseHTTPMiddleware):
     def __init__(self, app: ASGIApp):

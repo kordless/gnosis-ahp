@@ -1,7 +1,0 @@
-feat: Add comprehensive file_manager tool
-
-Introduces a new, unified `file_manager` tool to handle all file and directory operations within a session. This tool replaces the need for separate, single-purpose file tools and provides a more robust and consistent interface for file management.
-
-- New `file_manager` tool supports: create, read, write, list, move, delete, search, copy, versions, and restore.
-- The tool registry is now more resilient and will no longer crash the server if a tool fails to load.
-- The `docker_api` tool now correctly handles `204 No Content` responses.

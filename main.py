@@ -15,7 +15,7 @@ from gnosis_ahp.auth import validate_token_from_query, generate_token
 from gnosis_ahp.tools.tool_registry import get_global_registry, ToolError
 from gnosis_ahp.core.storage_service import StorageService
 from gnosis_ahp.core.aperture_service import get_aperture_service
-from gnosis_ahp.core.middleware import ApertureMiddleware
+from gnosis_ahp.core.middleware import ApertureMiddleware, ContentTypeMiddleware
 from gnosis_ahp.core.errors import (
     AHPException,
     ahp_exception_handler,
@@ -70,6 +70,7 @@ api_router = APIRouter(dependencies=[Depends(verify_token)])
 ui_router = APIRouter()
 
 app.add_exception_handler(AHPException, ahp_exception_handler)
+app.add_middleware(ContentTypeMiddleware)
 app.add_middleware(ApertureMiddleware)
 app.mount("/static", StaticFiles(directory="."), name="static")
 
