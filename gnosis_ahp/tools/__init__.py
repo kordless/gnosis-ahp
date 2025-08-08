@@ -14,6 +14,7 @@ from . import file_manager
 from . import divination
 from . import memory
 from . import messaging
+from . import network_test
 from . import ollama_client
 from . import random
 from . import streaming

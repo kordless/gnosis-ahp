@@ -35,8 +35,7 @@ def get_storage_config() -> Dict[str, str]:
     """Get current storage configuration"""
     return {
         'file_storage': 'gcs',
-        'gcs_bucket': os.environ.get('GCS_BUCKET_NAME', 'gnosis-ocr-storage'),
-        'model_bucket': os.environ.get('MODEL_BUCKET_NAME', 'gnosis-ocr-models')
+        'gcs_bucket': os.environ.get('GCS_BUCKET_NAME', 'gnosis-user-storage')
     }
 
 

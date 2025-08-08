@@ -13,14 +13,7 @@ logger = logging.getLogger(__name__)
 
 # The base URL for the Ollama server is configurable via an environment variable.
 AHP_ENVIRONMENT = os.getenv("AHP_ENVIRONMENT", "local")
-
-# Get the base URL and strip any accidental quotes
-base_url_env = os.getenv("OLLAMA_BASE_URL", "http://ollama.nuts.services:11434")
-# Strip single and double quotes that might have been accidentally included
-base_url_env = base_url_env.strip("'\"")
-
-OLLAMA_BASE_URL = "http://host.docker.internal:11434" if AHP_ENVIRONMENT == "local" else base_url_env
-
+OLLAMA_BASE_URL = "http://host.docker.internal:11434" if AHP_ENVIRONMENT == "local" else os.getenv("OLLAMA_BASE_URL", "http://ollama.nuts.services:11434")
 
 # Log the configuration for debugging
 logger.info(f"Ollama client configuration - AHP_ENVIRONMENT: {AHP_ENVIRONMENT}, OLLAMA_BASE_URL: {OLLAMA_BASE_URL}")

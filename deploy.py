@@ -100,7 +100,7 @@ def main():
         # Deploy to Cloud Run
         # Filter out keys that are not for the AHP server itself
         deploy_env_vars = {k: v for k, v in env_config.items() if k not in ["PROJECT_ID", "GCP_SERVICE_ACCOUNT", "REGION", "ARTIFACT_REGISTRY_REPO"]}
-        env_vars_string = ",".join([f"{key}='{value}'" for key, value in deploy_env_vars.items()])
+        env_vars_string = ",".join([f"{key}={value}" for key, value in deploy_env_vars.items()])
         
         deploy_command = [
             "gcloud", "run", "deploy", image_name,
