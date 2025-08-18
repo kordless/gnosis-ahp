@@ -22,7 +22,7 @@
 
 ## 💡 Core Concepts
 
-The **AI Hypercall Protocol (AHP)** is a "post-protocol" manifesto. It argues that we already have the perfect protocol for remote procedure calls: **HTTP**.
+The **Agentic Hypercall Protocol (AHP)** is a "post-protocol" manifesto. It argues that we already have the perfect protocol for remote procedure calls: **HTTP**.
 
 The AHP philosophy is simple:
 
